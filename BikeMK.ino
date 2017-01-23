@@ -3,79 +3,97 @@
 #include <LiquidCrystal_I2C.h>
 #include <iarduino_RTC.h>
 // интервал сброса
-// короткое длинное нажатие кнопки
-iarduino_RTC time(RTC_DS3231);                       // инициализация работы со временем
-LiquidCrystal_I2C lcd(0x27, 16, 2);                  // устанавливаем дисплей
+iarduino_RTC time(RTC_DS3231);                           // инициализация работы со временем
+LiquidCrystal_I2C lcd(0x27, 16, 2);                      // устанавливаем дисплей
 
-const byte gerconPin = 2;                            // пин геркона
+volatile unsigned long lastCycleTurnTime = 0;	        // время от посленей фиксации оборота колеса
+volatile float curSpeed = 0.0;                          // текущая скорость
+volatile float MaxSpeed = 0.0;                          // максимальаня скорость
 
-// установка пинов кнопок
-const byte button1Pin = 5;
-const byte button2Pin = 6;
-const byte button3Pin = 7;
+const unsigned long dynCharRefreshRate = 5000;          // значение интервала для сброса динамических параметров как текущая скорость
+const unsigned long screenRefreshRate = 600;           // частота обновления экрана
+const unsigned long millisecondsOf24Hours = 86400000;   // 24 часа в формате миллисекунд
+unsigned long lifeCycleTime = 0;                        // переменная для отсчета времени необходимости обновления экрана
+bool isMovement = false;                                // находится ли велосипедист в движении
 
+int cycleLengthValue = 1234;                            // длина окружности колеса
 
-const unsigned long dynCharRefreshRate = 5000;      // значение интервала для сброса динамических параметров как текущая скорость
-const unsigned long screenRefreshRate = 1000;       // частота обновления экрана
-
-// анти дребезг контактов на кнопках
-Bounce debounceButton1 = Bounce();
-Bounce debounceButton2 = Bounce();
-Bounce debounceButton3 = Bounce();
-
-// экран
-byte settingsCursorPosition = 0;                    // позиция курсора на экране
 byte timeModeSet = 2;	                            // позиция при настройке времени (начальная минуты)
-int menuPosition = 0;                               // пункт меню
+byte menuPosition = 0;                              // пункт меню
+byte settingPosition = 0;
+byte settingsCursorPosition = 0;
+bool isSettingsMenuActive = false;
 
-int cycleLenghtValue = 1234;                        // длина окружности колеса
+unsigned long  travelTime = 0;	                        // время движения
+volatile unsigned long travelDistance = 0;              // текущий путь в мм
+unsigned long curCal = 0;                               // текущее количество сожженных ккал
+int BPM = 0;                                            // текущее сердцебиение
 
-//герокон
-volatile long countOfCycleTurns = 0;                // количество оборотов колеса
-volatile unsigned long lastCycleTurnTime = 0;	    // время от посленей фиксации оборота колеса
-volatile bool isInterruptGerconRunning = false;     // запущенно ли прерывание геркона
-volatile float curSpeed = 0.0;                      // текущая скорость
-volatile float curDistance = 0.0;	            // текущий путь
-volatile int curPulse = 0;                          // текущий пульс
+unsigned long totalDistance = 0;	                // общий путь в км
+word totalDays = 0;                                     // общее время движения, часть дней
+word totalTime = 0;                                     // общее время движения, часть минут и часов
 
-float maxSpeed = 0.0;                               // максимальная скорость
-unsigned long  travelTime = 0;	                    // время движения
-float cycleLengthValue = 3.600;	                    // значение длины окружности колеса
-float totalDistance = 0.0;	                    // общий путь
+int avgBPM = 0;                                         // среднее значение пульса за период
+float avgSpeed = 0.0;                                   // среднее значение скорости за период
 
-int curCal = 0;                                     // текущее количество сожженных ккал
-int avgPulse = 0;                                   // среднее значение пульса за период
-float avgSpeed = 0.0;                               // среднее значение скорости за период
-
-
+bool redrawScreen = true;
+bool redrawValues = true;
 
 void setup() {
   initLCD();
-  time.begin();                                     // запуск работы с часами
-  // настройка пинов кнопок и подстрокйка подтягивающего резистора
-  pinMode(button1Pin, INPUT);
-  digitalWrite(button1Pin, HIGH);
-  pinMode(button2Pin, INPUT);
-  digitalWrite(button2Pin, HIGH);
-  pinMode(button3Pin, INPUT);
-  digitalWrite(button3Pin, HIGH);
-
-  // привязка объектов антидребезка к кнопкам
-  debounceButton1.attach(button1Pin);
-  debounceButton1.interval(5);
-  debounceButton2.attach(button2Pin);
-  debounceButton2.interval(5);
-  debounceButton3.attach(button3Pin);
-  debounceButton3.interval(5);
-
-  pinMode(2, INPUT);	                              // установка пина на вход для геркона
-  attachInterrupt(0, SpeedRegistrator, RISING);	      // установка прерывания на смены 0-1
-  
+  time.begin();                                         // запуск работы с часами
+  initButtons();
+  initSpeedRegistarator();
   lcd.clear();
 }
 
 void loop() {
+  buttonsHandler();
+  /*if (isMovement) {
+    if (lifeCycleTime == 0) {
+      lifeCycleTime = millis();
+    }
+    if (millis() - lastCycleTurnTime >= dynCharRefreshRate) {
+        // если движемся и больше 5 секунд стоим то
+    }
 
+    if (millis() - lifeCycleTime >= screenRefreshRate) {
+      travelTime += 1;
+      totalTime += 1;
+      if (totalTime >= millisecondsOf24Hours) {
+        totalDays++;
+        totalTime = 0;
+      }
+      lifeCycleTime = millis();
+    }
+  } else {
+    // если нет движения 15 минут то обнулить параметры
+  }*/
+  if (millis() - lifeCycleTime >= screenRefreshRate) {
+    if (!isSettingsMenuActive) {
+      if (redrawScreen) {
+        printCurrentScreenTittles();
+        redrawScreen = false;
+      }
+      if (redrawValues) {
+        printCurrnetScreenValues();
+        redrawValues = false;
+      }
+    } else {
+      if (redrawScreen) {
+        printCurrentScreenSettingsTittles();
+        redrawScreen = false;
+      }
+      if (settingPosition == 1){
+        redrawValues = true;
+      }
+      if (redrawValues){
+        printCurrentScreenSettingsValues();
+        redrawValues = false;   
+      }
+    }
+    lifeCycleTime = millis();
+  }
 
 
 }
