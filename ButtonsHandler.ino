@@ -56,6 +56,14 @@ void PressedTheFirstButton() {
   if (isSettingsMenuActive) {
     switch (settingPosition) {
       case 0:
+        if (brightness == 255)
+          brightness = 31;
+        else
+          brightness += 32;
+        setBrightness();
+        redrawValues = true;
+        break;
+      case 1:
         byte powRate;
         int tmpPoweredScope;
         tmpPoweredScope = 1;
@@ -74,9 +82,11 @@ void PressedTheFirstButton() {
             cycleLengthValue -= 9 * tmpPoweredScope;
         else
           cycleLengthValue += 1 * tmpPoweredScope;
-          redrawValues = true;
+        redrawValues = true;
+        calculateMaxTimeForSpeedRegistration();       // временно
+        calculateMinTimeForSpeedRegistration();
         break;
-      case 1:
+      case 2:
         switch (timeModeSet) {
           case 2: time.settime(-1, (time.minutes == 59 ? 0 : time.minutes + 1), -1, -1, -1, -1, -1); break;
           case 3: time.settime(-1, -1, (time.Hours == 23 ? 0 : time.Hours + 1), -1, -1, -1, -1); break;
@@ -85,7 +95,7 @@ void PressedTheFirstButton() {
           case 6: time.settime(-1, -1, -1, -1, -1, (time.year == 99 ? 0 : time.year + 1), -1); break;
         }
         break;
-      case 2:
+      case 3:
         // ничего не нужно
         break;
     }
@@ -96,20 +106,22 @@ void PressedLongTheFirstButton() {
   if (isSettingsMenuActive) {
     switch (settingPosition) {
       case 0:
+        break;
+      case 1:
         if (settingsCursorPosition == 3)
           settingsCursorPosition = 0;
         else
           settingsCursorPosition++;
         lcd.setCursor(settingsCursorPosition, 1);
         break;
-      case 1:
+      case 2:
         // выбор позиции настройки времени -минуты-дни -дни
         if (timeModeSet == 6)
           timeModeSet = 2;
         else
           timeModeSet++;
         break;
-      case 2:
+      case 3:
         // обнулить EEPROM b jи очистка карточки
         break;
     }
@@ -121,33 +133,30 @@ void PressedTheSecondButton() {
     menuPosition++;
     if (menuPosition == 5)
       menuPosition = 0;
-    redrawValues = true;
   } else {
     settingPosition++;
-    if (settingPosition == 3)
+    if (settingPosition == 4)
       settingPosition = 0;
-    redrawValues = true;
-    if (settingPosition == 1) {
-      lcd.noBlink();
-    }
   }
+  redrawValues = true;
   redrawScreen = true;
 }
 
 void PressedLongTheSecondButton() {
   if (isSettingsMenuActive) {
-    lcd.noBlink();
+    noInterrupts();
     isSettingsMenuActive = false;
+    lcd.noBlink();
     menuPosition = 0;
     settingPosition = 0;
     printCurrentScreenTittles();
     printCurrnetScreenValues();
     redrawScreen = false;
   } else {
+    interrupts();
     isSettingsMenuActive = true;
     settingPosition = 0;
     menuPosition = 0;
-    settingsCursorPosition = 0;
     printCurrentScreenSettingsTittles();
     printCurrentScreenSettingsValues();
     redrawScreen = false;
