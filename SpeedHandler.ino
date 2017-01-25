@@ -1,36 +1,32 @@
-//герокон
-volatile bool isInterruptGerconRunning = false;                           // запущенно ли прерывание геркона
-bool isFirstTurn = true;
+bool isFirstTurn = true;                                                  // Отвечает за трек первого оборота
 const byte gerconPin = 2;                                                 // пин геркона
 
-void initSpeedRegistarator() {
+void initSpeedRegistarator() {                                            // инициализация при запуске
   pinMode(2, INPUT);	                                                  // установка пина на вход для геркона
-  attachInterrupt(0, SpeedRegistrator, RISING);	                          // установка прерывания на смены 0-1
+  attachInterrupt(0, travelDynCharRegistrator, RISING);	                  // установка прерывания на смены 0-1
 }
 
-// регистратор скорости
-void SpeedRegistrator() {
-  noInterrupts();                                                       // запрещаем прерывания
+void travelDynCharRegistrator() {                                         // регистратор скорости, пути и времени пути
+  noInterrupts();                                                         // запрещаем прерывания
 
-  if (isFirstTurn) {
+  if (isFirstTurn) {                                                      // если первый оборот колеса за 5сек то пропускаем его только фиксируя время
     isFirstTurn = false;
+    isMovement = true;                                                    // в движении
     lastCycleTurnTime = millis();                                         // время последнего оборота колеса
   } else {
-    unsigned long timeInterval = millis() - lastCycleTurnTime;        // интервал между оборотом колеса, для расчета скорости
-    if (timeInterval < maxTimeIntrvl                                  // если время меньше чем мин допустимого для расчета от 3км/ч
-        && timeInterval > minTimeIntrvl) {                                                // небольшая защита от шума, если прерывание произошло тут же то пропустить
-      curSpeed = cycleLengthValue / ((float)timeInterval / 1000.0) * 3.6; // длину колеса умножаем на время между оборотами
+    unsigned long timeInterval = millis() - lastCycleTurnTime;            // интервал между оборотом колеса, для расчета скорости
+    if (timeInterval <= maxTimeIntrvl                                     // если время меньше чем мин допустимого для расчета от 3км/ч
+        && timeInterval >= minTimeIntrvl) {                               // небольшая защита от шума, если прерывание произошло тут же то пропустить
+
+      // длину колеса умножаем на время между оборотами
       // делим на отрвыок времени за который пройдено
       // сие растояние и переводим в км/ч из м/с
+      curSpeed = cycleLengthValue / ((float)timeInterval / 1000.0) * 3.6; // текущая скорость
+
       if (curSpeed > MaxSpeed) {                                          // если текущая скорость окозалась больше максимальной
         MaxSpeed = curSpeed;                                              // то переопределяем максимальную скорость
       }
-      Serial.print("V=");
-      Serial.print(curSpeed, 1);
-      Serial.println();
-      Serial.print("T=");
-      Serial.print(timeInterval);
-      Serial.println();
+
       // так же записываем важные параметры
       travelDistance += cycleLengthValueMM;                               // текущий путь в мм для точности
       totalDistanceMM += cycleLengthValueMM;                              // глобальный путь в мм для точности
@@ -39,19 +35,19 @@ void SpeedRegistrator() {
 
       lastCycleTurnTime = millis();                                       // время последнего оборота колеса
       redrawValues = true;                                                // разрешаем перерисовать значения
-      isMovement = true;                                                  // переназначаем значение флага
+      isMovement = true;
     }
   }
-  interrupts();                                                         // рарешаем прерывание
+  interrupts();                                                           // рарешаем прерывание
 }
 
 // сброс динамических параметров
-void SpeedReset() {
+void travelDynCharReset() {
   noInterrupts();                                                         // запрещаем прерывания тк если вдруг начнется прерывание то значения сбросятся
   isMovement = false;                                                     // уже не движемся
-  stopTime = lastCycleTurnTime;
-  stopHandler = true;
-  isFirstTurn = true;
+  stopTime = millis();                                                    // пишем время остановки
+  stopHandler = true;                                                     // разрешаем проверять критерий полной остановки 15 минут
+  isFirstTurn = true;                                                     // обнуляем значение параметра первого оборота
   lastCycleTurnTime = 0;                                                  // время последнего оборота
   curSpeed = 0;                                                           // текущая скорость
   BPM = 0;                                                                // текущий пульс
@@ -59,17 +55,18 @@ void SpeedReset() {
   interrupts();                                                           // рарешаем прерывание
 }
 
-void ResetTravelChar() {
-  stopHandler = false;
-  travelTime = 0;
-  travelDistance = 0;
+void resetTravelChar() {
+  stopHandler = false;                                                    // остановка в 15 минут обработана и больше не требует проверки
+  travelTime = 0;                                                         // сброс времени пути
+  travelDistance = 0;                                                     // сброс пройденой дистанции
+  redrawValues = true;                                                    // разрешаем перерисовать значения
 }
 
-void calculateMaxTimeForSpeedRegistration() {
-  maxTimeIntrvl = cycleLengthValue * 1200;                                          // 1200 = 3,6(перевод с метрво в км/ч )/3 (км/ч) * 1000 мс
+void calculateMaxTimeForSpeedRegistration() {                             // расчет времени при котором движение начинается от 3км/ч
+  maxTimeIntrvl = cycleLengthValue * 1200;                                // 1200 = 3,6(перевод с метрво в км/ч )/3 (км/ч) * 1000 мс
 }
 
-void calculateMinTimeForSpeedRegistration() {
-  minTimeIntrvl = cycleLengthValue * 18;                                            // 18 = 3,6(перевод с метрво в км/ч )/200 (км/ч) * 1000 мс
+void calculateMinTimeForSpeedRegistration() {                             // расчет времени при котором движение достигает 200км/ч максимально допустимая скорость
+  minTimeIntrvl = cycleLengthValue * 18;                                  // 18 = 3,6(перевод с метрво в км/ч )/200 (км/ч) * 1000 мс
 }
 

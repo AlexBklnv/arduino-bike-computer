@@ -7,7 +7,7 @@ byte getDigitFromCycleLengtValue(byte posOfDigit)
   byte tmp;
   switch (posOfDigit) { // поразрядно слева направо
     case 0:
-      tmp = (int)cycleLengthValueMM / 1000;
+      tmp = (int)cycleLengthValueMM / 1000;                          
       break;
     case 1:
       tmp = (int)(cycleLengthValueMM / 100) % 10;

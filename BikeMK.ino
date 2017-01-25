@@ -20,7 +20,7 @@ unsigned long minTimeIntrvl = 0;
 const unsigned long dynCharRefreshRate = 5000;          // значение интервала для сброса динамических параметров как текущая скорость
 const unsigned long screenRefreshRate = 600;            // частота обновления экрана
 const unsigned long millisecondsOf24Hours = 86400000;   // 24 часа в формате миллисекунд
-const unsigned long millisecondsOf15minutes = 900000;
+const unsigned long millisecondsOf15minutes = 900000;   // 15 минут без движения
 unsigned long lifeCycleTime = 0;                        // переменная для отсчета времени необходимости обновления экрана
 bool isMovement = false;                                // находится ли велосипедист в движении
 
@@ -51,7 +51,6 @@ bool redrawValues = true;
 
 void setup() {
   initLCD();
-  Serial.begin(9600);
   calculateMaxTimeForSpeedRegistration();       // временно
   calculateMinTimeForSpeedRegistration();
   time.begin();                                         // запуск работы с часами
@@ -64,7 +63,7 @@ void loop() {
   buttonsHandler();                                                     // проверяем есть ли события на кнопке
   if (isMovement) {                                                     // если мы движемся
     if (millis() - lastCycleTurnTime >= dynCharRefreshRate) {
-      SpeedReset();
+      travelDynCharReset();
     }
     if (totalDistanceMM >= 1000000) {                                   // елси путь стал = 1км
       totalDistance++;                                                  // глоабльная дистанция в км увеличивается
@@ -85,7 +84,7 @@ void loop() {
   } else {
     if (stopHandler) {
       if (millis() - stopTime >= millisecondsOf15minutes) {
-        ResetTravelChar();
+        resetTravelChar();
       }
     }
   }
