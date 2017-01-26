@@ -45,9 +45,9 @@ void printCurSpeedTittle() {                                         // выво
 
 void printCurDistanceTittle() {                                      // вывод заголовка текущей дистанции на экран
   lcd.setCursor(0, 1);
-  lcd.print("DST");                                         
+  lcd.print("DST");
   lcd.setCursor(11, 1);
-  lcd.print("m.");                                         
+  lcd.print("m.");
 }
 
 void printCurrentScreenTittles() {                                   // вывод заголовков экранов
@@ -57,35 +57,35 @@ void printCurrentScreenTittles() {                                   // выво
     case 0:                                                          // экран текущей скорости, дистанции и времени пути.
       printCurSpeedTittle();
       lcd.setCursor(10, 0);
-      lcd.write(travelClockIndex);                                   
+      lcd.write(travelClockIndex);
       printCurDistanceTittle();
       break;
     case 1:                                                          // экран текущей скорости, дистанции и времени (по настроеной дате в часовом модуле)
       printCurSpeedTittle();
       lcd.setCursor(10, 0);
-      lcd.write(clockIndex);                                 
+      lcd.write(clockIndex);
       printCurDistanceTittle();
       break;
     case 2:                                                          // экран скорости, сердцебиения и калорий
       printCurSpeedTittle();
       lcd.setCursor(11, 0);
-      lcd.write(heartIndex);                                 
+      lcd.write(heartIndex);
       lcd.setCursor(7, 1);
-      lcd.print("cal.");                                      
+      lcd.print("cal.");
       break;
     case 3:                                                         // экран текущей скорости и максимальной скорости
       printCurSpeedTittle();
       lcd.setCursor(0, 1);
-      lcd.print("Max V");                                      
+      lcd.print("Max V");
       lcd.setCursor(11, 1);
       lcd.print("KMH");
       break;
     case 4:                                                         // экран глоабльной дистанции и времени пути
-      lcd.print("TD=");                                       
+      lcd.print("TD=");
       lcd.setCursor(14, 0);
       lcd.print("KM");
       lcd.setCursor(0, 1);
-      lcd.print("TT=");                                        
+      lcd.print("TT=");
       break;
   }
 }
@@ -93,15 +93,15 @@ void printCurrentScreenTittles() {                                   // выво
 void printCurrnetScreenValues() {                                   // вывод значений динамический параметров в зависимости от экрана
   switch (menuPosition) {
     case 0:                                                         // экран текущей скорости, дистанции и времени пути.
-      printCurSpeed();                                              
+      printCurSpeed();
       lcd.setCursor(11, 0);
-      printTime(travelTime);                                           
-      printTravelDistance();                                 
+      printTime(travelTime);
+      printTravelDistance();
       break;
     case 1:                                                         // экран текущей скорости, дистанции и времени (по настроеной дате в часовом модуле)
       printCurSpeed();
       lcd.setCursor(11, 0);
-      lcd.print(time.gettime("H:i"));                       
+      lcd.print(time.gettime("H:i"));
       printTravelDistance();
       break;
     case 2:                                                         // экран скорости, сердцебиения и калорий
@@ -109,10 +109,10 @@ void printCurrnetScreenValues() {                                   // выво�
       clearValue(13, 0, 3);
       lcd.print(BPM);
       clearValue(0, 1, 6);
-      lcd.print(curCal);                                     
+      lcd.print(curCal);
       break;
     case 3:                                                         // экран текущей скорости и максимальной скорости
-      printCurSpeed();                                        
+      printCurSpeed();
       clearValue(6, 1, 5);
       lcd.print(MaxSpeed, 1);
       break;
@@ -178,8 +178,8 @@ void printCurrentScreenSettingsValues() {                           // выво�
     case 0:                                                         // вывод яркости в процентах
       clearValue(0, 1, 3);
       lcd.print(round(brightness / 2.55));
-      break;  
-      case 1:                                                       // вывод длины окружности колеса       
+      break;
+    case 1:                                                       // вывод длины окружности колеса
       lcd.print(cycleLengthValueMM);
       lcd.setCursor(settingsCursorPosition, 1);
       break;
@@ -189,4 +189,9 @@ void printCurrentScreenSettingsValues() {                           // выво�
     case 3:
       break;
   }
+}
+
+void printMSG(byte col, byte row, String msg) {
+  lcd.setCursor(col, row);
+  lcd.print(msg);
 }

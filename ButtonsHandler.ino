@@ -122,7 +122,21 @@ void PressedLongTheFirstButton() {
           timeModeSet++;
         break;
       case 3:
-        // обнулить EEPROM b jи очистка карточки
+        lcd.clear();
+        printMSG(0, 0, "Resetting");
+        printMSG(0, 1, "achievements..");
+        //resetAchievements();
+        delay(400);
+        printMSG(14, 1, "OK");
+        delay(600);
+        lcd.clear();
+        printMSG(0, 0, "Resetting");
+        printMSG(0, 1, "SD card...");
+        // почистить карту
+        delay(400);
+        printMSG(14, 1, "OK");
+        delay(600);
+        redrawScreen = true;
         break;
     }
   }
