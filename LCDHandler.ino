@@ -5,14 +5,14 @@ void initLCD() {                                                     // иниц
   setBrightness();                                                   // установка яркости экрана
   lcd.backlight();                                                   // Включаем подсветку дисплея
   lcd.setCursor(0, 0);
-  lcd.print("Loading...");
+  lcd.print(F("Loading..."));
   initCustomChar();                                                  // инициализация собственных символов
 }
 
 void clearValue(byte col, byte row, byte rowLength) {                // очистка поля значения от старых данных
   lcd.setCursor(col, row);                                           // установка значения курсора в начальное положение
   for (int i = 0; i < rowLength; i++) {                              // зачистка экрана в максимальную длину значения
-    lcd.print(" ");
+    lcd.print(F(" "));
   }
   lcd.setCursor(col, row);                                           // установка положения курсора в нулевое положение значения
 }
@@ -30,24 +30,24 @@ void printTravelDistance() {                                         // выво
 void printTime(unsigned long time) {                                 // вывод времени в формате HH:mm
   time /= 1000;
   if (time / 60 / 60 < 10)                                           // если часов меньше 10 то пишем 0
-    lcd.print("0");
+    lcd.print(F("0"));
   lcd.print(int(time / 60 / 60));                                    // пишем колчичество часов
-  lcd.print(":");
+  lcd.print(F(":"));
   if (time / 60 % 60 < 10)                                           // вычисляем минуты
-    lcd.print("0");
+    lcd.print(F("0"));
   lcd.print((int)(time / 60 % 60));
 }
 
 void printCurSpeedTittle() {                                         // вывод заголовка скорости на экран
   lcd.setCursor(6, 0);                                               // позиция после значения километража пишем измерение
-  lcd.print("KMH");
+  lcd.print(F("KMH"));
 }
 
 void printCurDistanceTittle() {                                      // вывод заголовка текущей дистанции на экран
   lcd.setCursor(0, 1);
-  lcd.print("DST");
+  lcd.print(F("DST"));
   lcd.setCursor(11, 1);
-  lcd.print("m.");
+  lcd.print(F("m."));
 }
 
 void printCurrentScreenTittles() {                                   // вывод заголовков экранов
@@ -55,6 +55,7 @@ void printCurrentScreenTittles() {                                   // выво
   lcd.setCursor(0, 0);
   switch (menuPosition) {
     case 0:                                                          // экран текущей скорости, дистанции и времени пути.
+      lcd.print("sf");
       printCurSpeedTittle();
       lcd.setCursor(10, 0);
       lcd.write(travelClockIndex);
@@ -71,21 +72,21 @@ void printCurrentScreenTittles() {                                   // выво
       lcd.setCursor(11, 0);
       lcd.write(heartIndex);
       lcd.setCursor(7, 1);
-      lcd.print("cal.");
+      lcd.print(F("cal."));
       break;
     case 3:                                                         // экран текущей скорости и максимальной скорости
       printCurSpeedTittle();
       lcd.setCursor(0, 1);
-      lcd.print("Max V");
+      lcd.print(F("Max V"));
       lcd.setCursor(11, 1);
-      lcd.print("KMH");
+      lcd.print(F("KMH"));
       break;
     case 4:                                                         // экран глоабльной дистанции и времени пути
-      lcd.print("TD=");
+      lcd.print(F("TD="));
       lcd.setCursor(14, 0);
-      lcd.print("KM");
+      lcd.print(F("KM"));
       lcd.setCursor(0, 1);
-      lcd.print("TT=");
+      lcd.print(F("TT="));
       break;
   }
 }
@@ -121,11 +122,11 @@ void printCurrnetScreenValues() {                                   // выво�
       lcd.print(totalDistance);
       clearValue(3, 1, 9);
       if (totalDays < 100)                                          // форматированный вывод DDD:HH:mm
-        lcd.print("0");
+        lcd.print(F("0"));
       if (totalDays < 10)
-        lcd.print("0");
+        lcd.print(F("0"));
       lcd.print(totalDays);
-      lcd.print(":");
+      lcd.print(F(":"));
       printTime(totalTime);
       break;
   }
@@ -140,14 +141,14 @@ void printCurrentScreenSettingsTittles() {                          // выво�
   lcd.setCursor(0, 0);
   switch (settingPosition) {                                        // экран установки яркости
     case 0:
-      lcd.print("Set brightness");
+      lcd.print(F("Set brightness"));
       lcd.setCursor(3, 1);
-      lcd.print("%");
+      lcd.print(F("%"));
       break;
     case 1:                                                         // экран установки длины окружности колеса
-      lcd.print("Set cycle length");
+      lcd.print(F("Set cycle length"));
       lcd.setCursor(5, 1);
-      lcd.print("mm.");
+      lcd.print(F("mm."));
       settingsCursorPosition = 0;
       lcd.setCursor(settingsCursorPosition, 1);
       lcd.blink();
@@ -157,10 +158,10 @@ void printCurrentScreenSettingsTittles() {                          // выво�
       printDateTimeSettings();
       break;
     case 3:                                                         // экран сброса
-      lcd.print("Reset your ");
+      lcd.print(F("Reset your "));
       lcd.write(achievementIndex);
       lcd.setCursor(0, 1);
-      lcd.print("yes(1)");
+      lcd.print(F("yes(1)"));
       break;
   }
 }
@@ -177,7 +178,7 @@ void printCurrentScreenSettingsValues() {                           // выво�
   switch (settingPosition) {
     case 0:                                                         // вывод яркости в процентах
       clearValue(0, 1, 3);
-      lcd.print(round(brightness / 2.55));
+      lcd.print((byte)round(brightness / 2.55));
       break;
     case 1:                                                       // вывод длины окружности колеса
       lcd.print(cycleLengthValueMM);
@@ -195,3 +196,4 @@ void printMSG(byte col, byte row, String msg) {
   lcd.setCursor(col, row);
   lcd.print(msg);
 }
+

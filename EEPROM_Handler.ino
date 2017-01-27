@@ -1,5 +1,3 @@
-#include <EEPROM.h>
-
 void readDataFromEEPROM() {                                           // читаем данные из EEPROM
   EEPROM.get(0, brightness);
   EEPROM.get(1, totalDays);
@@ -52,4 +50,3 @@ void writeDataToEEPROM(int addr, float value) {                       // зап�
   if (tmp != value)
     EEPROM.put(addr, value);
 }
-

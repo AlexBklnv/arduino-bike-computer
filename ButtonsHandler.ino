@@ -77,14 +77,14 @@ void PressedTheFirstButton() {
           tmpPoweredScope *= 10;
         if (getDigitFromCycleLengtValue(settingsCursorPosition) == 9)
           if (settingsCursorPosition == 0)
-            cycleLengthValue -= 8 * tmpPoweredScope;
+            cycleLengthValueMM -= 8 * tmpPoweredScope;
           else
-            cycleLengthValue -= 9 * tmpPoweredScope;
+            cycleLengthValueMM -= 9 * tmpPoweredScope;
         else
-          cycleLengthValue += 1 * tmpPoweredScope;
+          cycleLengthValueMM += 1 * tmpPoweredScope;
         redrawValues = true;
-        calculateMaxTimeForSpeedRegistration();       // временно
-        calculateMinTimeForSpeedRegistration();
+        cycleLengthValue = cycleLengthValueMM / 1000.0;
+        calculateMaxMinTimeForSpeedReg();
         break;
       case 2:
         switch (timeModeSet) {
@@ -123,18 +123,18 @@ void PressedLongTheFirstButton() {
         break;
       case 3:
         lcd.clear();
-        printMSG(0, 0, "Resetting");
-        printMSG(0, 1, "achievements..");
+        printMSG(0, 0, F("Resetting"));
+        printMSG(0, 1, F("achievements.."));
         //resetAchievements();
         delay(400);
-        printMSG(14, 1, "OK");
+        printMSG(14, 1, F("OK"));
         delay(600);
         lcd.clear();
-        printMSG(0, 0, "Resetting");
-        printMSG(0, 1, "SD card...");
+        printMSG(0, 0, F("Resetting"));
+        printMSG(0, 1, F("SD card..."));
         // почистить карту
         delay(400);
-        printMSG(14, 1, "OK");
+        printMSG(14, 1, F("OK"));
         delay(600);
         redrawScreen = true;
         break;
@@ -158,7 +158,7 @@ void PressedTheSecondButton() {
 
 void PressedLongTheSecondButton() {
   if (isSettingsMenuActive) {
-    noInterrupts();
+    detachInt();
     isSettingsMenuActive = false;
     lcd.noBlink();
     menuPosition = 0;
@@ -167,7 +167,7 @@ void PressedLongTheSecondButton() {
     printCurrnetScreenValues();
     redrawScreen = false;
   } else {
-    interrupts();
+    attachInt();
     isSettingsMenuActive = true;
     settingPosition = 0;
     menuPosition = 0;
@@ -177,7 +177,3 @@ void PressedLongTheSecondButton() {
     redrawValues = false;
   }
 }
-
-
-
-

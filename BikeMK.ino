@@ -1,11 +1,17 @@
+#include <avr/pgmspace.h>
+#include <SPI.h>
 #include <Bounce2.h>
 #include <Wire.h>
+#include <SD.h>
 #include <LiquidCrystal_I2C.h>
 #include <iarduino_RTC.h>
+#include <EEPROM.h>
+#include <nRF24L01.h>                                     // Подключаем файл настроек из библиотеки RF24
+#include <RF24.h>   
 
 iarduino_RTC time(RTC_DS3231);                          // инициализация работы со временем
 LiquidCrystal_I2C lcd(0x27, 16, 2);                     // устанавливаем дисплей
-byte brightness = 255;                                  // яркость экрана
+byte brightness = 127;                                  // яркость экрана
 
 const unsigned long dynCharRefreshRate = 5000;          // значение интервала для сброса динамических параметров как текущая скорость 5сек
 const unsigned long screenRefreshRate = 600;            // частота обновления экрана 600мс
@@ -49,6 +55,10 @@ bool redrawValues = true;                               // требуется л
 bool saveData = false;
 unsigned long saveStartTimeStamp = 0;
 unsigned long saveStopTimeStamp = 0;
+
+int dynDist = 0; 
+float dynAvgSpeed = 0.0;
+int countAvgSpeed = 0;
 
 void setup() {
   initLCD();
@@ -122,3 +132,4 @@ void loop() {
     lifeCycleTime = millis();
   }
 }
+
