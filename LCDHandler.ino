@@ -1,5 +1,5 @@
-// пин регулировки яркости экрана
-const byte pinLCDBrightness[] PROGMEM = { 3 };
+// пин регулировки яркости экрана = 3
+
 
 void initLCD() {                                                     // инициализация экрана
   lcd.init();                                                        // инициализация дисплея
@@ -19,7 +19,7 @@ void clearValue(byte col, byte row, byte rowLength) {                // очис
 }
 
 void printCurSpeed() {                                               // вывод значения текущей скорости
-  clearValue(0, 0, 5);
+  clearValue(0, 0, 5); 
   lcd.print(curSpeed, 1);
 }
 
@@ -58,19 +58,19 @@ void printCurrentScreenTittles() {                                   // выво
     case 0:                                                          // экран текущей скорости, дистанции и времени пути.
       printCurSpeedTittle();
       lcd.setCursor(10, 0);
-      lcd.write(pgm_read_byte(&(charIndex[4])));
+      lcd.write(travelClockIndex);
       printCurDistanceTittle();
       break;
     case 1:                                                          // экран текущей скорости, дистанции и времени (по настроеной дате в часовом модуле)
       printCurSpeedTittle();
       lcd.setCursor(10, 0);
-      lcd.write(pgm_read_byte(&(charIndex[0])));
+      lcd.write(clockIndex);
       printCurDistanceTittle();
       break;
     case 2:                                                          // экран скорости, сердцебиения и калорий
       printCurSpeedTittle();
       lcd.setCursor(11, 0);
-      lcd.write(pgm_read_byte(&(charIndex[1])));
+      lcd.write(heartIndex);
       lcd.setCursor(7, 1);
       lcd.print(F("cal."));
       break;
@@ -115,7 +115,7 @@ void printCurrnetScreenValues() {                                   // выво�
     case 3:                                                         // экран текущей скорости и максимальной скорости
       printCurSpeed();
       clearValue(6, 1, 5);
-      lcd.print(getMaxSpeed(), 1);
+      lcd.print(maxSpeed, 1);
       break;
     case 4:                                                         // экран глоабльной дистанции и времени пути
       clearValue(3, 0, 6);
@@ -133,7 +133,7 @@ void printCurrnetScreenValues() {                                   // выво�
 }
 
 void setBrightnessLCD() {                                              // установка яркости экрана
-  analogWrite(pgm_read_byte(&(pinLCDBrightness[0])), getBrightness());
+  analogWrite(3, brightness);
 }
 
 void printCurrentScreenSettingsTittles() {                          // вывод заголовков настроек
@@ -159,7 +159,7 @@ void printCurrentScreenSettingsTittles() {                          // выво�
       break;
     case 3:                                                         // экран сброса
       lcd.print(F("Reset your "));
-      lcd.write(pgm_read_byte(&(charIndex[3])));
+      lcd.write(achievementIndex);
       lcd.setCursor(0, 1);
       lcd.print(F("yes(1)"));
       break;
@@ -178,7 +178,7 @@ void printCurrentScreenSettingsValues() {                           // выво�
   switch (settingPosition) {
     case 0:                                                         // вывод яркости в процентах
       clearValue(0, 1, 3);
-      lcd.print((byte)round(getBrightness() / 2.55));
+      lcd.print((byte)round(brightness / 2.55));
       break;
     case 1:                                                       // вывод длины окружности колеса
       lcd.print(cycleLengthValueMM);
@@ -191,10 +191,3 @@ void printCurrentScreenSettingsValues() {                           // выво�
       break;
   }
 }
-
-void printMSG(byte col, byte row, String msg) {
-  lcd.setCursor(col, row);
-  lcd.print(msg);
-}
-
-

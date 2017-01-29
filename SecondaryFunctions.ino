@@ -1,9 +1,8 @@
 // функция упростит ввод длины окружности колеса
 // ввод производится на каждом разряде, а не увеличение числа от 1000-9999
 // изъят цифру из числа длины колеса
-byte getDigitFromCycleLengtValue(byte posOfDigit)
-{
-  byte tmp;
+byte getDigitFromCycleLengtValue(byte posOfDigit) {
+  byte tmp = 0;
   switch (posOfDigit) { // поразрядно слева направо
     case 0:
       tmp = (int)cycleLengthValueMM / 1000;
@@ -22,15 +21,7 @@ byte getDigitFromCycleLengtValue(byte posOfDigit)
 }
 
 void calculateMaxMinTimeForSpeedReg() {
-  calculateMaxTimeForSpeedRegistration();
-  calculateMinTimeForSpeedRegistration();
-}
-
-void calculateMaxTimeForSpeedRegistration() {                             // расчет времени при котором движение начинается от 3км/ч
   maxTimeIntrvl = cycleLengthValue * 1200;                                // 1200 = 3,6(перевод с метрво в км/ч )/3 (км/ч) * 1000 мс
-}
-
-void calculateMinTimeForSpeedRegistration() {                             // расчет времени при котором движение достигает 200км/ч максимально допустимая скорость
   minTimeIntrvl = cycleLengthValue * 18;                                  // 18 = 3,6(перевод с метрво в км/ч )/200 (км/ч) * 1000 мс
 }
 

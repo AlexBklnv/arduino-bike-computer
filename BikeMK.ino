@@ -1,4 +1,3 @@
-#include <avr/pgmspace.h>
 #include <SPI.h>
 #include <Bounce2.h>
 #include <Wire.h>
@@ -11,15 +10,9 @@
 
 iarduino_RTC time(RTC_DS3231);                          // инициализация работы со временем
 LiquidCrystal_I2C lcd(0x27, 16, 2);                     // устанавливаем дисплей
-                   
-const unsigned long timePoint[] PROGMEM = {
-  600,// частота обновления экрана 600мс
-  5000,// значение интервала для сброса динамических параметров как текущая скорость 5сек
-  86400000, // 24 часа
-  900000,// 15 минут
-  300000,// 5 минут
-  2000 // 2 секунды
-};
+
+byte brightness = 127;                                  // яркость экрана
+const unsigned long millisecondsOf24Hours = 86400000;   // 24 часа
 
 volatile unsigned long totalDistanceMM = 0;             // общий путь в миллиметрах для точности
 volatile unsigned long travelDistance = 0;              // текущий путь в мм (динамический параметр)
@@ -28,14 +21,15 @@ volatile unsigned long totalTime = 0;                   // общее время
 volatile unsigned long lastCycleTurnTime = 0;	        // время от посленей фиксации оборота колеса
 volatile unsigned long stopTime = 0;                    // штамп времени остановки
 volatile float curSpeed = 0.0;                          // текущая скорость
-volatile byte maxSpeed = 0;
+volatile float maxSpeed = 0.0;                             // максимальня скорость округленная
 
 unsigned long lifeCycleTime = 0;                        // переменная для отсчета времени необходимости обновления экрана
 bool isMovement = false;                                // находится ли велосипедист в движении
 bool stopHandler = false;                               // штам остановки активирован
 
 float cycleLengthValue = 1.000;                         // длина окружности колеса в метрах
-int cycleLengthValueMM = 1000;
+int cycleLengthValueMM = 1000;                          // длина окружности колеса в миллиметрах
+
 // переменные связанные с отображением на экранах
 byte timeModeSet = 2;	                                // позиция при настройке времени (начальная минуты)
 byte menuPosition = 0;                                  // пункт меню
@@ -49,9 +43,6 @@ int BPM = 0;                                            // текущее сер
 unsigned long totalDistance = 0;	                // общий путь в км
 int totalDays = 0;                                      // общее время движения, часть дней
 
-int avgBPM = 0;                                         // среднее значение пульса за период
-float avgSpeed = 0.0;                                   // среднее значение скорости за период
-
 bool redrawScreen = true;                               // требуется ли обновить экран заголовков
 bool redrawValues = true;                               // требуется ли обновить экран значений
 
@@ -59,9 +50,12 @@ bool saveData = false;                                  // требуется л
 unsigned long saveStartTimeStamp = 0;                   // начало периода отсчета сохранения данных в EEPROM
 unsigned long saveStopTimeStamp = 0;                    // конец периода отсчета сохранения данных в EEPROM
 
-int dynDist = 0;
-float dynAvgSpeed = 0.0;
-int countAvgSpeed = 0;
+unsigned long dynBurned = 0;
+unsigned long dynDist = 0;
+float dynSpeed = 0.0;
+int countDynAvgSpeed = 0;
+int dynHR = 0;
+int countDynAvgHR = 0;
 
 void setup() {
   initLCD();
@@ -76,7 +70,7 @@ void setup() {
 void loop() {
   buttonsHandler();                                                     // проверяем есть ли события на кнопке
   if (isMovement) {                                                     // если мы движемся
-    if (millis() - lastCycleTurnTime >= pgm_read_byte(&(timePoint[1]))) {
+    if (millis() - lastCycleTurnTime >= 5000) {                         // значение интервала для сброса динамических параметров как текущая скорость 5сек
       travelDynCharReset();
     }
     if (totalDistanceMM >= 1000000) {                                   // елси путь стал = 1км
@@ -85,33 +79,33 @@ void loop() {
         totalDistance = 0;
       totalDistanceMM = totalDistanceMM - 1000000;                      // находим новое значение дистанции
     }
-    if (totalTime >= pgm_read_byte(&(timePoint[2]))) {                           // если время стало больше 24 часов
+    if (totalTime >= millisecondsOf24Hours) {                           // если время стало больше 24 часов
       totalDays++;                                                      // увеличиваем количество дней
       if (totalDays > 999) {                                            // если дней больше 999 то обнуляем
         totalDays = 0;
       }
-      totalTime = totalTime - pgm_read_byte(&(timePoint[2]));                    // зануляем время и прибовляем хвост
+      totalTime = totalTime - millisecondsOf24Hours;                    // зануляем время и прибовляем хвост
     }
-    if (travelTime >= pgm_read_byte(&(timePoint[2]))) {                          // если текущее время дистанции больше 24 часов
-      travelTime = travelTime - pgm_read_byte(&(timePoint[2]));                  // зануляем время и прибовляем хвост
+    if (travelTime >= millisecondsOf24Hours) {                          // если текущее время дистанции больше 24 часов
+      travelTime = travelTime - millisecondsOf24Hours;                  // зануляем время и прибовляем хвост
     }
     if (saveStartTimeStamp == 0) {
       saveStartTimeStamp = millis();
-    } else if (saveStopTimeStamp - saveStartTimeStamp >= 5000) {
+    } else if (saveStopTimeStamp - saveStartTimeStamp >= 300000) {      // 5 минут
       saveDataAtEEPROM();
       saveStartTimeStamp = 0;
     }
     saveStopTimeStamp = millis();
   } else {
     if (stopHandler) {
-      if (millis() - stopTime >= pgm_read_byte(&(timePoint[3]))) {
+      if (millis() - stopTime >= 900000) {                              // 15 минут
         saveDataAtEEPROM();
         resetTravelChar();
       }
     }
   }
 
-  if (millis() - lifeCycleTime >= pgm_read_byte(&(timePoint[0]))) {                  // если прошло больше чем 1 секунда  то обновить значения
+  if (millis() - lifeCycleTime >= 600) {                                // если прошло больше чем 1 секунда  то обновить значения
     if (redrawScreen) {                                                 // требуется обновить экран
       if (!isSettingsMenuActive) {                                      // если не в меню настроек
         printCurrentScreenTittles();                                    // обновляем заголовки экрана параметров
@@ -127,7 +121,7 @@ void loop() {
         printCurrentScreenSettingsValues();                             // обновляем значения
       }
       if (settingPosition == 2 && isSettingsMenuActive) {              // если в меню настроек 2
-        redrawValues = true;                                          // требуется обновить экран по времени для мерцания значения часов
+        redrawValues = true;                                           // требуется обновить экран по времени для мерцания значения часов
       } else {
         redrawValues = false;                                         // иначе не требуется
       }

@@ -1,43 +1,39 @@
-/*File trainingFile;
-bool isSDExists;
-void initSDCard() {
-  SD.begin();
-  if (!SD.exists("train.txt")) {
-    isSDExists = true;
-    SD.open("train.txt", FILE_WRITE);
-    trainingFile.close();
-  } else
-    isSDExists = false;
+bool isSDCardExist() {
+  return SD.begin();
+}
+
+File openFile() {
+  return SD.open("train.txt", FILE_WRITE);
+}
+
+void eraseSD() {
+  SD.remove("train.txt");
+}
+
+void closeFile(File file) {
+  file.close();
 }
 
 void writeStartDynDataToSDCard() {
-  if (isSDExists) {
-    trainingFile = SD.open("train.txt", FILE_WRITE);
-    if (trainingFile) {
-         printToSD(F("<date date=\"")); printToSD(time.gettime("d:m:Y")); printToSD(F("\">"));
-         printToSD(F("<spec tc_start=\"")); printToSD(time.gettime("H:i")); printToSD(F("\" "));
-    }
-    trainingFile.close();
-  }
+  File file = openFile();
+  file.print(F("<date date=\"")); file.print(time.gettime("d:m:Y")); file.print(F("\">"));
+  file.print(F("<spec tc_start=\"")); file.print(time.gettime("H:i")); file.print(F("\" "));
+  closeFile(file);
 }
 
 void writeStopDynDataToSDCard() {
-  if (isSDExists) {
-    trainingFile = SD.open("train.txt", FILE_WRITE);
-    if (trainingFile) {
-       printToSD(F("tc_stop=\"")); printToSD(time.gettime("H:i")); printToSD(F("\" "));
-      // printToSD(F("dist=\"")); printToSD(round(dynDist/1000)); printToSD(F("\" "));
-       printToSD(F("burn"));
-
-    }
-    trainingFile.close();
-  }
+  File file = openFile();
+  file.print(F("tc_stop=\"")); file.print(time.gettime("H:i")); file.print(F("\" "));
+  file.print(F("dist=\"")); file.print((unsigned long)(dynDist / 1000.0)); file.print(F("\" "));
+  file.print(F("burn=\"")); file.print(dynBurned); file.print(F("\" "));
+  file.print(F("avg_speed=\"")); file.print(dynSpeed / countDynAvgSpeed); file.print(F("\" "));
+  file.print(F("avg_HR=\"")); file.print((int)(dynHR / countDynAvgHR)); file.print(F("\" "));
+  file.print(F("\">"));
+  closeFile(file);
 }
 
-void printToSD(String val) {
-  trainingFile.print(val);
+void writeDayIsOver() {
+  File file = openFile();
+  file.print(F("<\/date>"));
+  closeFile(file);
 }
-
-void printToSD(int val) {
-  trainingFile.print(val);
-}*/

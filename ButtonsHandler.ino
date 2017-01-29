@@ -1,8 +1,7 @@
 // пины кнопок
-const byte buttonPin[] PROGMEM = {
-  5,                                              // button1Pin
-  6,                                              // button2Pin
-};
+// button1Pin = 5
+// button2Pin = 6
+
 
 // анти дребезг контактов на кнопках
 Bounce debounceButton1 = Bounce();
@@ -14,13 +13,13 @@ unsigned long button2PressTimeStamp;
 
 void initButtons() {
   // настройка пинов кнопок и подстрокйка подтягивающего резистора
-  digitalWrite(pgm_read_byte(&(buttonPin[0])), HIGH);
-  digitalWrite(pgm_read_byte(&(buttonPin[1])), HIGH);
+  digitalWrite(5, HIGH);
+  digitalWrite(6, HIGH);
 
   // привязка объектов антидребезка к кнопкам
-  debounceButton1.attach(pgm_read_byte(&(buttonPin[0])), INPUT);
+  debounceButton1.attach(5, INPUT);
   debounceButton1.interval(5);
-  debounceButton2.attach(pgm_read_byte(&(buttonPin[1])), INPUT);
+  debounceButton2.attach(6, INPUT);
   debounceButton2.interval(5);
 }
 
@@ -29,7 +28,7 @@ void buttonsHandler() {
     if (debounceButton1.read() == 1) {
       button1PressTimeStamp =  millis();
     } else {
-      if (millis() - button1PressTimeStamp >= pgm_read_byte(&(timePoint[5])) ) {
+      if (millis() - button1PressTimeStamp >= 2000) {
         PressedLongTheFirstButton();
       } else {
         PressedTheFirstButton();
@@ -39,7 +38,7 @@ void buttonsHandler() {
     if (debounceButton2.read() == 1) {
       button2PressTimeStamp =  millis();
     } else {
-      if (millis() - button2PressTimeStamp >= pgm_read_byte(&(timePoint[5])) ) {
+      if (millis() - button2PressTimeStamp >= 2000) {
         PressedLongTheSecondButton();
       } else {
         PressedTheSecondButton();
@@ -52,25 +51,19 @@ void PressedTheFirstButton() {
   if (isSettingsMenuActive) {
     switch (settingPosition) {
       case 0:
-        if (getBrightness() == 255)
-          setBrightness(31);
+        if (brightness == 255)
+          brightness = 31;
         else
-          setBrightness(getBrightness() + 32);
+          brightness += 32;
+        setBrightness(brightness);
         setBrightnessLCD();
         redrawValues = true;
         break;
       case 1:
-        byte powRate;
         int tmpPoweredScope;
-        tmpPoweredScope = 1;
-        switch (settingsCursorPosition) {
-          case 0: powRate = 3; break;
-          case 1: powRate = 2; break;
-          case 2: powRate = 1; break;
-          case 3: powRate = 0; break;
-        }
-        for (byte i = 0; i < powRate; i++)
-          tmpPoweredScope *= 10;
+        tmpPoweredScope = 10;
+        pow(tmpPoweredScope, 3 - settingsCursorPosition);
+        
         if (getDigitFromCycleLengtValue(settingsCursorPosition) == 9)
           if (settingsCursorPosition == 0)
             cycleLengthValueMM -= 8 * tmpPoweredScope;
@@ -105,34 +98,18 @@ void PressedLongTheFirstButton() {
       case 0:
         break;
       case 1:
-        if (settingsCursorPosition == 3)
-          settingsCursorPosition = 0;
-        else
-          settingsCursorPosition++;
+        settingsCursorPosition = settingsCursorPosition == 3 ? 0 : settingsCursorPosition++;
         lcd.setCursor(settingsCursorPosition, 1);
         break;
       case 2:
         // выбор позиции настройки времени -минуты-дни -дни
-        if (timeModeSet == 6)
-          timeModeSet = 2;
-        else
-          timeModeSet++;
+        timeModeSet = timeModeSet == 6 ? 2 : timeModeSet++;
         break;
       case 3:
-        lcd.clear();
-        printMSG(0, 0, F("Resetting"));
-        printMSG(0, 1, F("achievements.."));
-        //resetAchievements();
-        delay(400);
-        printMSG(14, 1, F("OK"));
-        delay(600);
-        lcd.clear();
-        printMSG(0, 0, F("Resetting"));
-        printMSG(0, 1, F("SD card..."));
-        // почистить карту
-        delay(400);
-        printMSG(14, 1, F("OK"));
-        delay(600);
+        resetAchievements();
+        eraseSD();
+        lcd.setCursor(14, 1);
+        lcd.print(F("OK"));
         redrawScreen = true;
         break;
     }
@@ -158,19 +135,14 @@ void PressedLongTheSecondButton() {
     detachInt();
     isSettingsMenuActive = false;
     lcd.noBlink();
-    menuPosition = 0;
     settingPosition = 0;
     printCurrentScreenTittles();
     printCurrnetScreenValues();
-    redrawScreen = false;
   } else {
     attachInt();
     isSettingsMenuActive = true;
-    settingPosition = 0;
     menuPosition = 0;
     printCurrentScreenSettingsTittles();
     printCurrentScreenSettingsValues();
-    redrawScreen = false;
-    redrawValues = false;
   }
 }
