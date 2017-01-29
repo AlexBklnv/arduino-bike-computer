@@ -1,9 +1,11 @@
 // индексы спец символов
-const byte clockIndex = 0;
-const byte heartIndex = 1;
-const byte energyIndex = 2;
-const byte achievementIndex = 3;
-const byte travelClockIndex = 4;
+const byte charIndex[] PROGMEM = {
+  0,// clockIndex
+  1,// heartIndex
+  2, // energyIndex
+  3,// achievementIndex
+  4 //travelClockIndex
+};
 
 byte clock[8] = {
   0b01110,
@@ -61,11 +63,11 @@ byte travelClock[8] = {
 };
 
 void initCustomChar() {                                              // инициализация символов
-  lcd.createChar(clockIndex, clock);
-  lcd.createChar(heartIndex, heart);
-  lcd.createChar(energyIndex, energy);
-  lcd.createChar(achievementIndex, achievement);
-  lcd.createChar(travelClockIndex, travelClock);
+  lcd.createChar(pgm_read_byte(&(charIndex[0])), clock);
+  lcd.createChar(pgm_read_byte(&(charIndex[1])), heart);
+  lcd.createChar(pgm_read_byte(&(charIndex[2])), energy);
+  lcd.createChar(pgm_read_byte(&(charIndex[3])), achievement);
+  lcd.createChar(pgm_read_byte(&(charIndex[4])), travelClock);
 }
 
 

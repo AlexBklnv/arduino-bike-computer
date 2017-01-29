@@ -1,9 +1,8 @@
-// TODO: PressedLongTheFirstButton 3 вариант обнуление еепром
-
-// установка пинов кнопок
-const byte button1Pin = 5;
-const byte button2Pin = 6;
-const byte button3Pin = 7;
+// пины кнопок
+const byte buttonPin[] PROGMEM = {
+  5,                                              // button1Pin
+  6,                                              // button2Pin
+};
 
 // анти дребезг контактов на кнопках
 Bounce debounceButton1 = Bounce();
@@ -15,15 +14,13 @@ unsigned long button2PressTimeStamp;
 
 void initButtons() {
   // настройка пинов кнопок и подстрокйка подтягивающего резистора
-  pinMode(button1Pin, INPUT);
-  digitalWrite(button1Pin, HIGH);
-  pinMode(button2Pin, INPUT);
-  digitalWrite(button2Pin, HIGH);
+  digitalWrite(pgm_read_byte(&(buttonPin[0])), HIGH);
+  digitalWrite(pgm_read_byte(&(buttonPin[1])), HIGH);
 
   // привязка объектов антидребезка к кнопкам
-  debounceButton1.attach(button1Pin);
+  debounceButton1.attach(pgm_read_byte(&(buttonPin[0])), INPUT);
   debounceButton1.interval(5);
-  debounceButton2.attach(button2Pin);
+  debounceButton2.attach(pgm_read_byte(&(buttonPin[1])), INPUT);
   debounceButton2.interval(5);
 }
 
@@ -32,7 +29,7 @@ void buttonsHandler() {
     if (debounceButton1.read() == 1) {
       button1PressTimeStamp =  millis();
     } else {
-      if (millis() - button1PressTimeStamp >= 2000 ) {
+      if (millis() - button1PressTimeStamp >= pgm_read_byte(&(timePoint[5])) ) {
         PressedLongTheFirstButton();
       } else {
         PressedTheFirstButton();
@@ -42,7 +39,7 @@ void buttonsHandler() {
     if (debounceButton2.read() == 1) {
       button2PressTimeStamp =  millis();
     } else {
-      if (millis() - button2PressTimeStamp >= 2000 ) {
+      if (millis() - button2PressTimeStamp >= pgm_read_byte(&(timePoint[5])) ) {
         PressedLongTheSecondButton();
       } else {
         PressedTheSecondButton();
@@ -51,16 +48,15 @@ void buttonsHandler() {
   }
 }
 
-
 void PressedTheFirstButton() {
   if (isSettingsMenuActive) {
     switch (settingPosition) {
       case 0:
-        if (brightness == 255)
-          brightness = 31;
+        if (getBrightness() == 255)
+          setBrightness(31);
         else
-          brightness += 32;
-        setBrightness();
+          setBrightness(getBrightness() + 32);
+        setBrightnessLCD();
         redrawValues = true;
         break;
       case 1:
@@ -84,6 +80,7 @@ void PressedTheFirstButton() {
           cycleLengthValueMM += 1 * tmpPoweredScope;
         redrawValues = true;
         cycleLengthValue = cycleLengthValueMM / 1000.0;
+        setCycleLenght(cycleLengthValueMM);
         calculateMaxMinTimeForSpeedReg();
         break;
       case 2:

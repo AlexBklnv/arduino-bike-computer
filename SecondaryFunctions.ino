@@ -36,7 +36,6 @@ void calculateMinTimeForSpeedRegistration() {                             // Ñ€Ð
 
 void resetAchievements() {
   totalDays = 0;
-  MaxSpeed = 0.0;
   totalDistance = 0;
   totalDistanceMM = 0;
   totalTime = 0;
