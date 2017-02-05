@@ -1,9 +1,8 @@
 // индексы спец символов
 const byte clockIndex = 0;
 const byte heartIndex = 1;
-const byte energyIndex = 2;
-const byte achievementIndex = 3;
-const byte travelClockIndex = 4;
+const byte achievementIndex = 2;
+const byte travelClockIndex = 3;
 
 byte clock[8] = {
   0b01110,
@@ -25,17 +24,6 @@ byte heart[8] = {
   0b01110,
   0b00100,
   0b00000
-};
-
-byte energy[8] = {
-  0b00011,
-  0b00110,
-  0b01100,
-  0b11110,
-  0b11111,
-  0b00110,
-  0b01100,
-  0b11000
 };
 
 byte achievement[8] = {
@@ -63,7 +51,6 @@ byte travelClock[8] = {
 void initCustomChar() {                                              // инициализация символов
   lcd.createChar(clockIndex, clock);
   lcd.createChar(heartIndex, heart);
-  lcd.createChar(energyIndex, energy);
   lcd.createChar(achievementIndex, achievement);
   lcd.createChar(travelClockIndex, travelClock);
 }

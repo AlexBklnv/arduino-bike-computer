@@ -9,11 +9,11 @@
 */
 
 void readDataFromEEPROM() {                                           // читаем данные из EEPROM
-  EEPROM.get(0,brightness);
+  EEPROM.get(0, brightness);
   EEPROM.get(1, totalDays);
   EEPROM.get(3, cycleLengthValueMM);
   cycleLengthValue = cycleLengthValueMM / 1000.0;
-  EEPROM.get(5,maxSpeed);
+  EEPROM.get(5, maxSpeed);
   EEPROM.get(9, totalDistance);
   EEPROM.get(13, totalDistanceMM);
   EEPROM.get(17, totalTime);
@@ -27,11 +27,12 @@ void saveDataAtEEPROM() {                                             // сох�
   writeDataToEEPROM(17, totalTime);
 }
 
-void setCycleLenght(int num){
+
+void setCycleLenght(int num) {
   writeDataToEEPROM(3, num);
 }
 
-void setBrightness(byte num){
+void setBrightness(byte num) {
   writeDataToEEPROM(0, num);
 }
 
