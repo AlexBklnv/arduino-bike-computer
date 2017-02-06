@@ -12,7 +12,7 @@ void readDataFromEEPROM() {                                           // чит�
   EEPROM.get(0, brightness);
   EEPROM.get(1, totalDays);
   EEPROM.get(3, cycleLengthValueMM);
-  cycleLengthValue = cycleLengthValueMM / 1000.0;
+  cycleLengthValue = cycleLengthValueMM / 1000.0 * 3.6;
   EEPROM.get(5, maxSpeed);
   EEPROM.get(9, totalDistance);
   EEPROM.get(13, totalDistanceMM);

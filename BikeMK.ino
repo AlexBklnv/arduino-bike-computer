@@ -22,20 +22,20 @@ const unsigned long millisecondsOf24Hours = 86400000;   // 24 часа
 unsigned long maxTimeIntrvl;                            // верхняя граница времени порога срабатывания геркона (при минимальнйо скорости)
 unsigned long minTimeIntrvl;                            // нижняя граница времени порога срабатывания геркона  (при максимальнйо скорости)
 
-volatile unsigned long totalDistanceMM = 0;             // общий путь в миллиметрах для точности
-volatile unsigned long travelDistance = 0;              // текущий путь в мм (динамический параметр)
-volatile unsigned long travelTime = 0;	                // время движения (динамический параметр)
-volatile unsigned long totalTime = 0;                   // общее время движения, часть минут и часов
-volatile unsigned long lastCycleTurnTime = 0;	        // время от посленей фиксации оборота колеса
-volatile unsigned long stopTime = 0;                    // штамп времени остановки
-volatile float curSpeed = 0.0;                          // текущая скорость
-volatile float maxSpeed = 0.0;                             // максимальня скорость округленная
+ unsigned long totalDistanceMM = 0;             // общий путь в миллиметрах для точности
+ unsigned long travelDistance = 0;              // текущий путь в мм (динамический параметр)
+ unsigned long travelTime = 0;	                // время движения (динамический параметр)
+ unsigned long totalTime = 0;                   // общее время движения, часть минут и часов
+ unsigned long lastCycleTurnTime = 0;	        // время от посленей фиксации оборота колеса
+ unsigned long stopTime = 0;                    // штамп времени остановки
+ float curSpeed = 0.0;                          // текущая скорость
+ float maxSpeed = 0.0;                             // максимальня скорость округленная
 
 unsigned long lifeCycleTime = 0;                        // переменная для отсчета времени необходимости обновления экрана
-bool isMovement = false;                                // находится ли велосипедист в движении
+ bool isMovement = false;                                // находится ли велосипедист в движении
 bool stopHandler = false;                               // штам остановки активирован
 
-float cycleLengthValue = 1.000;                         // длина окружности колеса в метрах
+float cycleLengthValue = 3.600;                         // длина окружности колеса в метрах * 3.6 для вычисления скорости
 int cycleLengthValueMM = 1000;                          // длина окружности колеса в миллиметрах
 
 // переменные связанные с отображением на экранах
@@ -51,7 +51,7 @@ unsigned long totalDistance = 0;	                // общий путь в км
 int totalDays = 0;                                      // общее время движения, часть дней
 
 bool redrawScreen = true;                               // требуется ли обновить экран заголовков
-bool redrawValues = true;                               // требуется ли обновить экран значений
+volatile bool redrawValues = true;                               // требуется ли обновить экран значений
 
 bool saveData = false;                                  // требуется ли сохранить данные в EEPROM
 unsigned long saveStartTimeStamp = 0;                   // начало периода отсчета сохранения данных в EEPROM
@@ -65,7 +65,6 @@ int dynHR = 0;
 int countDynAvgHR = 0;
 
 void setup() {
-  pinMode(4,OUTPUT);
   Serial.begin(9600);
   initLCD();
   readDataFromEEPROM();
@@ -74,15 +73,14 @@ void setup() {
   initButtons();
   initRadio();
   initSpeedRegistarator();
-  initSDCard();
 }
 
 
 void loop() {
-
   buttonsHandler();                                                     // проверяем есть ли события на кнопке
   if (isMovement) {                                                     // если мы движемся
-    if (millis() - lastCycleTurnTime >= maxTimeIntrvl) {                // значение интервала для сброса при скорости ниже 3км/ч
+    writeDataToRadio(true);
+    if (millis() - lastCycleTurnTime > maxTimeIntrvl) {                // значение интервала для сброса при скорости ниже 3км/ч
       travelDynCharReset();
       writeDataToRadio(false);
     }
@@ -131,6 +129,7 @@ void loop() {
     }
     if (redrawValues) {                                                 // требуется обновить динамические параметры
       if (!isSettingsMenuActive) {                                      // если не в экране настроек
+        Serial.println("+");
         printCurrnetScreenValues();                                     // обновляем параметры тренировки
       } else {                                                          // если на экране настроек
         printCurrentScreenSettingsValues();                             // обновляем значения

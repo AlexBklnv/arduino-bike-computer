@@ -30,12 +30,12 @@ void writeDataToRadio(bool startScan) {
 
 void readDataFromRadio() {
   if (radio.available()) {
-    detachInt();
+   // detachInt();
     char msg[3];
-    radio.read(&msg, 3);
+    radio.read(&msg, sizeof(msg));
     BPM = atoi(msg);
     redrawValues = true;
-    attachInt();
+    //attachInt();
   }
 }
 

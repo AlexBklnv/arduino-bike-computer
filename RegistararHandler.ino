@@ -1,11 +1,11 @@
 #define GERCON_PIN 2// пин геркона = 2
 
 void attachInt() {
-  attachInterrupt(0, travelDynCharRegistrator, RISING);	           // установка прерывания на смены 0-1
+  attachInterrupt(digitalPinToInterrupt(2), travelDynCharRegistrator, RISING);	           // установка прерывания на смены 0-1
 }
 
 void detachInt() {
-  detachInterrupt(0);
+  detachInterrupt(digitalPinToInterrupt(2));
 }
 
 void initSpeedRegistarator() {                                            // инициализация при запуске
@@ -14,11 +14,10 @@ void initSpeedRegistarator() {                                            // и�
 }
 
 void travelDynCharRegistrator() {                                         // регистратор скорости, пути и времени пути
-  detachInt();                                                             // запрещаем прерывания
-  writeDataToRadio(true);
+  detachInt();                                                            // запрещаем прерывания
   if (!isMovement) {                                                      // если первый оборот колеса за 5сек то пропускаем его только фиксируя время
     isMovement = true;                                                    // в движении
-    lastCycleTurnTime = millis();                                         // время последнего оборота колеса
+    lastCycleTurnTime = millis();                                         // время последнего оборота колеса                                                     
   } else {
     unsigned long timeInterval = millis() - lastCycleTurnTime;            // интервал между оборотом колеса, для расчета скорости
     if (timeInterval <= maxTimeIntrvl                                     // если время меньше чем мин допустимого для расчета от 3км/ч
@@ -26,12 +25,12 @@ void travelDynCharRegistrator() {                                         // р�
       // длину колеса умножаем на время между оборотами
       // делим на отрвыок времени за который пройдено
       // сие растояние и переводим в км/ч из м/с
-      curSpeed = cycleLengthValue / ((float)timeInterval / 1000.0) * 3.6; // текущая скорость
+      curSpeed = (float)cycleLengthValue / ((float)timeInterval / 1000.0);// текущая скорость
 
       if (curSpeed > maxSpeed) {                                          // если текущая скорость окозалась больше максимальной округленной
         maxSpeed = curSpeed;
       }
-      delay(5);
+
       // так же записываем важные параметры
       travelDistance += cycleLengthValueMM;                               // текущий путь в мм для точности
       totalDistanceMM += cycleLengthValueMM;                              // глобальный путь в мм для точности
@@ -40,10 +39,12 @@ void travelDynCharRegistrator() {                                         // р�
 
       lastCycleTurnTime = millis();                                       // время последнего оборота колеса
       isMovement = true;
+      redrawValues = true;                                                   // разрешаем перерисовать значения
     }
+    Serial.print("out->");
+    Serial.println(travelDistance);
   }
-  redrawValues = true;                                                    // разрешаем перерисовать значения
-  attachInt();                                                            // рарешаем прерывание
+  attachInt();                                                            // рарешаем прерывание.
 }
 
 // сброс динамических параметров
@@ -68,8 +69,8 @@ void resetTravelChar() {
 }
 
 void calculateMaxMinTimeForSpeedReg() {
-  maxTimeIntrvl = cycleLengthValue * 1200;                                // 1200 = 3,6(перевод с метрво в км/ч )/3 (км/ч) * 1000 мс
-  minTimeIntrvl = cycleLengthValue * 18;                                  // 18 = 3,6(перевод с метрво в км/ч )/200 (км/ч) * 1000 мс
+  maxTimeIntrvl = cycleLengthValue * 334;                                // 334 = 1(3,6 внесено в радиус колеса)(перевод с метрво в км/ч )/3 (км/ч) * 1000 мс
+  minTimeIntrvl = cycleLengthValue * 5;                                  // 5 = (3,6 внесено в радиус колеса)(перевод с метрво в км/ч )/200 (км/ч) * 1000 мс
 }
 
 void resetAchievements() {

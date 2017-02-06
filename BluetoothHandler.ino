@@ -23,6 +23,8 @@ void serialEvent() {
       // отправить весь файл
       else {}
       // отправить только нужную часть файла
+
+      requestStatus = 2;
     } else if (requestStatus == 2) {
       if ((char)Serial.read() == '#')
         if ((char)Serial.read() == 'S')
@@ -32,21 +34,29 @@ void serialEvent() {
   }
 }
 
+void sendStopField() {
+  Serial.print(F("|"));
+}
+
 void sendReplyToDevice(char mode) {
   if (mode == 'F') {
     Serial.print(F("p="));
     Serial.print(getFilePos());
-    Serial.print(F("|"));
+    sendStopField();
+    requestStatus = 1;
   } else if (mode == 'D') {
-    Serial.print(F("p="));
-    Serial.print(getFilePos());
-    Serial.print(F("|"));
-    Serial.print(F("p="));
-    Serial.print(getFilePos());
-    Serial.print(F("|"));
-    Serial.print(F("p="));
-    Serial.print(getFilePos());
-    Serial.print(F("|"));
+    Serial.print(F("s="));  // текущая скорость
+    Serial.print(curSpeed);
+    sendStopField();
+    Serial.print(F("h="));  // хартрейт
+    Serial.print(BPM);
+    sendStopField();
+    Serial.print(F("d="));  // дистанция
+    Serial.print((unsigned long)(travelDistance / 1000));
+    sendStopField();
+    Serial.print(F("c="));  // калории
+    Serial.print(curCal);
+    sendStopField();
   }
 }
 

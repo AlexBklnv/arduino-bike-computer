@@ -76,9 +76,10 @@ void PressedTheFirstButton() {
             cycleLengthValueMM -= 9 * tmpPoweredScope;
         else
           cycleLengthValueMM += 1 * tmpPoweredScope;
+          
 
-        cycleLengthValue = cycleLengthValueMM / 1000.0;
         setCycleLenght(cycleLengthValueMM);
+        cycleLengthValue = cycleLengthValueMM / 1000.0 * 3.6;
         calculateMaxMinTimeForSpeedReg();
         break;
       case 2:
