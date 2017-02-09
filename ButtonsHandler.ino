@@ -1,13 +1,12 @@
 // пины кнопок
-#define BUTTON_1_PIN 5                   // пин радиомодуля Chip Enable
-#define BUTTON_2_PIN 6                    // пин радиомодуля Chip Select
+#define BUTTON_1_PIN 5                                                // пин кнопки 1. // кнопка 1 действует только в меню настроек
+#define BUTTON_2_PIN 6                                                // пин кнопки 2
 
 // анти дребезг контактов на кнопках
 Bounce debounceButton1 = Bounce();
 Bounce debounceButton2 = Bounce();
 
-// временные штампы нажатия на кнопку
-unsigned long buttonPressTimeStamp;
+unsigned long buttonPressTimeStamp;                                   // временный штампы нажатия на кнопку
 
 void initButtons() {
   // настройка пинов кнопок и подстрокйка подтягивающего резистора
@@ -21,8 +20,9 @@ void initButtons() {
   debounceButton2.interval(5);
 }
 
+// распознователь коротких и длинных нажатий на кнопку
 void buttonsHandler() {
-  if (debounceButton1.update())  {
+  if (debounceButton1.update())  {                                    // распознователь кнопки №1
     if (debounceButton1.read() == 1) {
       buttonPressTimeStamp =  millis();
     } else {
@@ -32,7 +32,7 @@ void buttonsHandler() {
         PressedTheFirstButton();
       }
     }
-  } else if (debounceButton2.update())  {
+  } else if (debounceButton2.update())  {                             // распознователь кнопки №2
     if (debounceButton2.read() == 1) {
       buttonPressTimeStamp =  millis();
     } else {
@@ -45,79 +45,76 @@ void buttonsHandler() {
   }
 }
 
-void PressedTheFirstButton() {
+void PressedTheFirstButton() {                                        // короткое нажатие кнопки 1
   if (isSettingsMenuActive) {
-    switch (menuPosition) {
+    switch (menuPosition) {                                           // меню настроек яркости
       case 0:
-        brightness = brightness == 255 ? 31 : brightness += 32;
-        setBrightness(brightness);
-        setBrightnessLCD();
+        brightness = brightness == 255 ? 31 : brightness += 32;       // инкремент яркости
+        setBrightness(brightness);                                    // сохраняем яркость в EEPROM
+        setBrightnessLCD();                                           // устанавливаем яркость экрана
         break;
-      case 1:
-        int tmpPoweredScope;
-        byte digit;
+      case 1:                                                         // меню настроек длины колеса
+        int tmpPoweredScope;                                          // множитель для разряда
+        byte digit;                                                   // рязряд
         tmpPoweredScope = 1;
-        for (byte i = 0; i < (3 - settingsCursorPosition); i++)
+        for (byte i = 0; i < (3 - cycleLengthCurPos); i++)            // в зависимости от разряда вычисляем множитель
           tmpPoweredScope *= 10;
 
-        if (settingsCursorPosition == 0)                                                // поразрядно слева направо
+        if (cycleLengthCurPos == 0)                                   // поразрядно слева направо получаем цифру
           digit = (byte)(cycleLengthValueMM / 1000);
-        else if (settingsCursorPosition == 1)
+        else if (cycleLengthCurPos == 1)
           digit = (byte)((cycleLengthValueMM / 100) % 10);
-        else if (settingsCursorPosition == 2)
+        else if (cycleLengthCurPos == 2)
           digit = (byte)((cycleLengthValueMM % 100) / 10);
-        else if (settingsCursorPosition == 3)
+        else if (cycleLengthCurPos == 3)
           digit = (byte)(cycleLengthValueMM % 10);
 
-        if (digit == 9)
-          if (settingsCursorPosition == 0)
+        if (digit == 9)                                                // полученную цифру инкриментируем по правилам
+          if (cycleLengthCurPos == 0)
             cycleLengthValueMM -= 8 * tmpPoweredScope;
           else
             cycleLengthValueMM -= 9 * tmpPoweredScope;
         else
           cycleLengthValueMM += 1 * tmpPoweredScope;
-          
 
-        setCycleLenght(cycleLengthValueMM);
-        cycleLengthValue = cycleLengthValueMM / 1000.0 * 3.6;
-        calculateMaxMinTimeForSpeedReg();
+        setCycleLenght(cycleLengthValueMM);                            // сохраняем значение длины колеса
+        cycleLengthValue = cycleLengthValueMM / 1000.0 * 3.6;          // вычисляем длину колеса в формате для вычисления скорости
+        calculateMaxMinTimeForSpeedReg();                              // вычисляем пороговые значения для новой длины колеса
         break;
-      case 2:
-        if (timeModeSet == 2)
+      case 2:                                                          // меню настройки часов
+        if (timeModeSet == 2)                                          // устанавливаем минуты
           time.settime(-1, (time.minutes == 59 ? 0 : time.minutes + 1), -1, -1, -1, -1, -1);
-        else if (timeModeSet == 3)
+        else if (timeModeSet == 3)                                     // устанавливаем часы
           time.settime(-1, -1, (time.Hours == 23 ? 0 : time.Hours + 1), -1, -1, -1, -1);
-        else if (timeModeSet == 4)
+        else if (timeModeSet == 4)                                     // устанавливаем дни
           time.settime(-1, -1, -1, (time.day == 31 ? 1 : time.day + 1), -1, -1, -1);
-        else if (timeModeSet == 5)
+        else if (timeModeSet == 5)                                     // устанавливаем месяц
           time.settime(-1, -1, -1, -1, (time.month == 12 ? 1 : time.month + 1), -1, -1);
-        else if (timeModeSet == 6)
+        else if (timeModeSet == 6)                                     // устанавливаем год
           time.settime(-1, -1, -1, -1, -1, (time.year == 99 ? 0 : time.year + 1), -1);
         break;
       default:
         break;
     }
-    redrawValues = true;
+    redrawValues = true;                                               // обновляем экран значений
   }
-
 }
 
-void PressedLongTheFirstButton() {
+void PressedLongTheFirstButton() {                                     // длинное нажатие кнопки 1
   if (isSettingsMenuActive) {
     switch (menuPosition) {
-      case 1:
-        settingsCursorPosition = settingsCursorPosition == 3 ? 0 : settingsCursorPosition + 1;
-        lcdSetCursor(settingsCursorPosition, 1);
+      case 1:                                                          // смена разряда настройки длины колеса
+        cycleLengthCurPos = cycleLengthCurPos == 3 ? 0 : cycleLengthCurPos + 1;
+        lcdSetCursor(cycleLengthCurPos, 1);
         break;
-      case 2:
-        // выбор позиции настройки времени -минуты-дни -дни
+      case 2:                                                          // выбор позиции настройки времени -минуты-дни -дни
         timeModeSet = timeModeSet == 6 ? 2 : timeModeSet + 1;
         break;
-      case 3:
-        resetAchievements();
+      case 3:                                                          // hard reset
         lcdSetCursor(14, 1);
         lcd.print(F("W8"));
-        eraseSD();
+        resetAchievements();                                           // чистим достижения
+        eraseSD();                                                     // чистим карточку
         lcdSetCursor(14, 1);
         lcd.print(F("OK"));
         redrawScreen = true;
@@ -128,8 +125,8 @@ void PressedLongTheFirstButton() {
   }
 }
 
-void PressedTheSecondButton() {
-  if (!isSettingsMenuActive) {
+void PressedTheSecondButton() {                                        // короткое нажатие кнопки 2
+  if (!isSettingsMenuActive) {                                         // смена экрана в зависимости от того в настрайках мы или нет
     menuPosition == 4 ? menuPosition = 0  : menuPosition ++;
   } else {
     menuPosition == 3 ? menuPosition = 0  : menuPosition ++;
@@ -139,20 +136,19 @@ void PressedTheSecondButton() {
 }
 
 
-void PressedLongTheSecondButton() {
-  menuPosition = 0;
-  if (isSettingsMenuActive) {
-    detachInt();	                                 // отключаем прерывание геркона
-    isSettingsMenuActive = false;
-    lcd.noBlink();
+void PressedLongTheSecondButton() {                                     // долго нажатие кнопки 2
+  menuPosition = 0;                                                     // на начальный экран
+  if (isSettingsMenuActive) {                                           // если мы перешли в меню отображения информации
+    attachInt();	                                                      // врубаем регистратор скорости
+    isSettingsMenuActive = false;                                       // меняем режим меню
+    lcd.noBlink();                                                      // если были в меню настроек длины колеса то вырубаем блинк
     printCurrentScreenTittles();
     printCurrnetScreenValues();
-  } else {
-    attachInt();
-    isSettingsMenuActive = true;
+  } else {                                                              // если перешли в меню настроек
+    detachInt();                                                        // вырубаем регистратор скорости
+    isSettingsMenuActive = true;                                        // свпаем режим
     printCurrentScreenSettingsTittles();
     printCurrentScreenSettingsValues();
   }
-
 }
 

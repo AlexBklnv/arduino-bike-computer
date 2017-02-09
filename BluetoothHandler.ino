@@ -1,83 +1,59 @@
-/*
-requestStatus
-0 - ожидаем запроса подключения
-1 - ожидаем получение размера файла
-2 - ожидаем запрос на получение динамических данных
-
-*/
-
-byte requestStatus = 0;
-
-void serialEvent() {
-  if (Serial.available()) {
-    if (requestStatus == 0) {
-      if ((char)Serial.read() == '#')
-        if ((char)Serial.read() == 'S')
-          if ((char)Serial.read() == 'F')
-            sendReplyToDevice('F');
-    } else if (requestStatus == 1) {
-      unsigned long filePos = 0;
-      while (Serial.available())
-        filePos = Serial.parseInt();
-      if (filePos < getFilePos()) {}
-      // отправить весь файл
-      else {}
-      // отправить только нужную часть файла
-
-      requestStatus = 2;
-    } else if (requestStatus == 2) {
-      if ((char)Serial.read() == '#')
-        if ((char)Serial.read() == 'S')
-          if ((char)Serial.read() == 'D')
-            sendReplyToDevice('D');
-    }
-  }
-}
-
-void sendStopField() {
-  Serial.print(F("|"));
-}
-
-void sendReplyToDevice(char mode) {
-  if (mode == 'F') {
-    Serial.print(F("p="));
-    Serial.print(getFilePos());
-    sendStopField();
-    requestStatus = 1;
-  } else if (mode == 'D') {
-    Serial.print(F("s="));  // текущая скорость
-    Serial.print(curSpeed);
-    sendStopField();
-    Serial.print(F("h="));  // хартрейт
-    Serial.print(BPM);
-    sendStopField();
-    Serial.print(F("d="));  // дистанция
-    Serial.print((unsigned long)(travelDistance / 1000));
-    sendStopField();
-    Serial.print(F("c="));  // калории
-    Serial.print(curCal);
-    sendStopField();
-  }
-}
-
-void sendDynDataToDevice() {
-
-}
-
-/*
-void sendFileToDevice(){
-  openFile(FILE_READ);
-  Serial.print(F("p="));
-  int syncFail = millis();
-  bool syncData = false;
-
-  while(millis() - syncFail < 5000){
-    while (Serial.available()) {
-      if ((char)Serial.read() == 'S'){
-        syncData = true;
+void serialEvent() {                                                                    // ивент происходит при получении данных через UART
+  if (Serial.available()) {                                                             // если есть данные
+    if (statusBLE == 0) {                                                               // данный режим нужен для ограничения от "левых" подключений
+      char msgDev[3];
+      Serial.readBytes(msgDev, 3);                                                      // принимаем команду от устройства. Если она опознана
+      if (msgDev[0] == '#')
+        if (msgDev[1] == 'S')
+          if (msgDev[2] == 'F') {
+            statusBLE = 1;                                                              // переходим в следующий режим
+            setRecResetTimeStamp();                                                     // фиксируем время приема
+          }
+    } else if (statusBLE == 1) {
+      unsigned long filePosDevice = 0;
+      while (Serial.available())                                                        // получаем размер файла
+        filePosDevice = Serial.parseInt();
+      if (filePosDevice != getFilePos() || filePosDevice == 0) {                        // если размер файла не равен тому что есть на карте то отсылаем данные
+        setFilePos(filePosDevice);                                                      // с позиции которой пришла
+        while (isFileAvailable()) {                                                     // отправляем файл как поток байтов
+          Serial.print(fileRead());
+        }
+        closeFile();
+      }
+      Serial.print(F("#!"));                                                            // конец отправки файла
+      statusBLE = 2;                                                                    // переход в режим отправки динамических данных
+      setRecResetTimeStamp();                                                           // фиксируем время приема
+    } else if (statusBLE == 2) {
+      char msgDev;
+      msgDev = Serial.read();
+      if (msgDev == 'N') {                                                              // распознаем команду дальнейшей отправки данных
+        setRecResetTimeStamp();                                                         // фиксируем время приема
+      } else  if (msgDev == 'S') {                                                      // распознаем команду остановки отправки данных
+        statusBLE = 0;                                                                  // уходим в режим ожидания синхронизации
       }
     }
   }
+}
 
-  Serial.write(file.fileSize());
-}*/
+void setRecResetTimeStamp() {                                                           // фиксируем время приема сообщения
+  requestResetTimeStamp = millis();
+}
+
+void sendStopField() {                                                                  // отправка символа - разделителя полей данных
+  Serial.print(F("|"));
+}
+
+void sendDynDataToDevice() {                                                            // отправка динамических данных шаблоном field=value|
+  Serial.print(F("s="));                                                                // текущая скорость
+  Serial.print(curSpeed);
+  sendStopField();
+  Serial.print(F("h="));                                                                // хартрейт
+  Serial.print(BPM);
+  sendStopField();
+  Serial.print(F("d="));                                                                // дистанция
+  Serial.print((unsigned long)(travelDistance / 1000));
+  sendStopField();
+  Serial.print(F("c="));                                                                // ккал
+  Serial.print(curCal);
+  sendStopField();
+}

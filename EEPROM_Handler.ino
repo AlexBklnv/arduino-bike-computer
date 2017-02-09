@@ -1,11 +1,11 @@
-/*
-0 - яркость экрана
-1 - totalDays
-3 - cycleLengthValueMM
-5 - MaxSpeed
-9 - totalDistance
-13 - totalDistanceMM
-17 - totalTime
+/*     адреса данных
+  0  - яркость экрана
+  1  - totalDays
+  3  - cycleLengthValueMM
+  5  - MaxSpeed
+  9  - totalDistance
+  13 - totalDistanceMM
+  17 - totalTime
 */
 
 void readDataFromEEPROM() {                                           // читаем данные из EEPROM
@@ -28,11 +28,11 @@ void saveDataAtEEPROM() {                                             // сох�
 }
 
 
-void setCycleLenght(int num) {
+void setCycleLenght(int num) {                                        // записываем длину колеса
   writeDataToEEPROM(3, num);
 }
 
-void setBrightness(byte num) {
+void setBrightness(byte num) {                                        // записываем уровень яркости
   writeDataToEEPROM(0, num);
 }
 

@@ -1,16 +1,19 @@
 #define GERCON_PIN 2// пин геркона = 2
 
 void attachInt() {
-  attachInterrupt(digitalPinToInterrupt(2), travelDynCharRegistrator, RISING);	           // установка прерывания на смены 0-1
+  attachInterrupt(digitalPinToInterrupt(GERCON_PIN), 
+    travelDynCharRegistrator, RISING);	                                  // установка прерывания на смены 0-1
 }
 
 void detachInt() {
-  detachInterrupt(digitalPinToInterrupt(2));
+  detachInterrupt(digitalPinToInterrupt(GERCON_PIN));
 }
 
 void initSpeedRegistarator() {                                            // инициализация при запуске
-  pinMode(GERCON_PIN, INPUT);	                                          // установка пина на вход для геркона
+  calculateMaxMinTimeForSpeedReg();                                       // расчитываем пороги срабатывания геркона
+  pinMode(GERCON_PIN, INPUT);	                                            // установка пина на вход для геркона
   attachInt();
+  
 }
 
 void travelDynCharRegistrator() {                                         // регистратор скорости, пути и времени пути
@@ -39,7 +42,7 @@ void travelDynCharRegistrator() {                                         // р�
 
       lastCycleTurnTime = millis();                                       // время последнего оборота колеса
       isMovement = true;
-      redrawValues = true;                                                   // разрешаем перерисовать значения
+      redrawValues = true;                                                // разрешаем перерисовать значения
     }
     Serial.print("out->");
     Serial.println(travelDistance);
@@ -49,7 +52,7 @@ void travelDynCharRegistrator() {                                         // р�
 
 // сброс динамических параметров
 void travelDynCharReset() {
-  detachInt();                                                         // запрещаем прерывания тк если вдруг начнется прерывание то значения сбросятся
+  detachInt();                                                            // запрещаем прерывания тк если вдруг начнется прерывание то значения сбросятся
   isMovement = false;                                                     // уже не движемся
   stopHandler = true;                                                     // разрешаем проверять критерий полной остановки 15 минут
   redrawValues = true;                                                    // разрешаем перерисовать значения
@@ -58,7 +61,7 @@ void travelDynCharReset() {
   curSpeed = 0.0;                                                         // текущая скорость
   BPM = 0;                                                                // текущий пульс
   saveStopTimeStamp = 0;
-  attachInt();                                                           // рарешаем прерывание
+  attachInt();                                                            // рарешаем прерывание
 }
 
 void resetTravelChar() {
@@ -69,11 +72,11 @@ void resetTravelChar() {
 }
 
 void calculateMaxMinTimeForSpeedReg() {
-  maxTimeIntrvl = cycleLengthValue * 334;                                // 334 = 1(3,6 внесено в радиус колеса)(перевод с метрво в км/ч )/3 (км/ч) * 1000 мс
-  minTimeIntrvl = cycleLengthValue * 5;                                  // 5 = (3,6 внесено в радиус колеса)(перевод с метрво в км/ч )/200 (км/ч) * 1000 мс
+  maxTimeIntrvl = cycleLengthValue * 334;                                 // 334 = 1(3,6 внесено в радиус колеса)(перевод с метрво в км/ч )/3 (км/ч) * 1000 мс
+  minTimeIntrvl = cycleLengthValue * 5;                                   // 5 = (3,6 внесено в радиус колеса)(перевод с метрво в км/ч )/200 (км/ч) * 1000 мс
 }
-
-void resetAchievements() {
+    
+void resetAchievements() {                                                // расстреливаем из квантовой пушки данные и зануляем их
   totalDays = 0;
   totalDistance = 0;
   totalDistanceMM = 0;
