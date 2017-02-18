@@ -45,43 +45,59 @@ void buttonsHandler() {
   }
 }
 
-void PressedTheFirstButton() {                                        // короткое нажатие кнопки 1
+void PressedTheFirstButton() {                                         // короткое нажатие кнопки 1
   if (isSettingsMenuActive) {
+    int tmpPoweredScope = 1;                                          // множитель для разряда
+    byte digit;                                                       // рязряд
     switch (menuPosition) {                                           // меню настроек яркости
       case 0:
         brightness = brightness == 255 ? 31 : brightness += 32;       // инкремент яркости
         setBrightness(brightness);                                    // сохраняем яркость в EEPROM
         setBrightnessLCD();                                           // устанавливаем яркость экрана
         break;
-      case 1:                                                         // меню настроек длины колеса
-        int tmpPoweredScope;                                          // множитель для разряда
-        byte digit;                                                   // рязряд
-        tmpPoweredScope = 1;
-        for (byte i = 0; i < (3 - cycleLengthCurPos); i++)            // в зависимости от разряда вычисляем множитель
+      case 1:                                                         // меню настроек веса
+        for (byte i = 0; i < (2 - longValueCurPos); i++)              // в зависимости от разряда вычисляем множитель
           tmpPoweredScope *= 10;
 
-        if (cycleLengthCurPos == 0)                                   // поразрядно слева направо получаем цифру
-          digit = (byte)(cycleLengthValueMM / 1000);
-        else if (cycleLengthCurPos == 1)
-          digit = (byte)((cycleLengthValueMM / 100) % 10);
-        else if (cycleLengthCurPos == 2)
+        if (longValueCurPos == 0)                                     // поразрядно слева направо получаем цифру
+          digit = (byte)(cycleLengthValueMM / 100);
+        else if (longValueCurPos == 1)
           digit = (byte)((cycleLengthValueMM % 100) / 10);
-        else if (cycleLengthCurPos == 3)
+        else if (longValueCurPos == 2)
           digit = (byte)(cycleLengthValueMM % 10);
 
-        if (digit == 9)                                                // полученную цифру инкриментируем по правилам
-          if (cycleLengthCurPos == 0)
-            cycleLengthValueMM -= 8 * tmpPoweredScope;
-          else
-            cycleLengthValueMM -= 9 * tmpPoweredScope;
+        if (longValueCurPos == 0) {
+          weight = digit == 3 ? weight - 3 * tmpPoweredScope : weight + tmpPoweredScope;
+        } else if (longValueCurPos == 1)
+          weight = digit == 9 ? weight - 6 * tmpPoweredScope : weight + tmpPoweredScope;
+        else {
+          weight = digit == 9 ? weight - 9 * tmpPoweredScope : weight + tmpPoweredScope;
+        }
+        setWeight(weight);                                             // сохраняем значение веса
+        break;
+      case 2:                                                          // меню настроек длины колеса
+        for (byte i = 0; i < (3 - longValueCurPos); i++)               // в зависимости от разряда вычисляем множитель
+          tmpPoweredScope *= 10;
+
+        if (longValueCurPos == 0)                                      // поразрядно слева направо получаем цифру
+          digit = (byte)(cycleLengthValueMM / 1000);
+        else if (longValueCurPos == 1)
+          digit = (byte)((cycleLengthValueMM / 100) % 10);
+        else if (longValueCurPos == 2)
+          digit = (byte)((cycleLengthValueMM % 100) / 10);
+        else if (longValueCurPos == 3)
+          digit = (byte)(cycleLengthValueMM % 10);
+
+        if (longValueCurPos == 0)
+          cycleLengthValueMM = digit == 5 ? cycleLengthValueMM - 4 * tmpPoweredScope : cycleLengthValueMM + tmpPoweredScope;
         else
-          cycleLengthValueMM += 1 * tmpPoweredScope;
+          cycleLengthValueMM = digit == 9 ? cycleLengthValueMM - 9 * tmpPoweredScope : cycleLengthValueMM + tmpPoweredScope;
 
         setCycleLenght(cycleLengthValueMM);                            // сохраняем значение длины колеса
         cycleLengthValue = cycleLengthValueMM / 1000.0 * 3.6;          // вычисляем длину колеса в формате для вычисления скорости
         calculateMaxMinTimeForSpeedReg();                              // вычисляем пороговые значения для новой длины колеса
         break;
-      case 2:                                                          // меню настройки часов
+      case 3:                                                          // меню настройки часов
         if (timeModeSet == 2)                                          // устанавливаем минуты
           time.settime(-1, (time.minutes == 59 ? 0 : time.minutes + 1), -1, -1, -1, -1, -1);
         else if (timeModeSet == 3)                                     // устанавливаем часы
@@ -103,14 +119,19 @@ void PressedTheFirstButton() {                                        // кор�
 void PressedLongTheFirstButton() {                                     // длинное нажатие кнопки 1
   if (isSettingsMenuActive) {
     switch (menuPosition) {
-      case 1:                                                          // смена разряда настройки длины колеса
-        cycleLengthCurPos = cycleLengthCurPos == 3 ? 0 : cycleLengthCurPos + 1;
-        lcdSetCursor(cycleLengthCurPos, 1);
+      case 1:                                                          // смена разряда настройки веса
+        longValueCurPos = longValueCurPos ==  2 ? 0 : longValueCurPos + 1;
+        lcdSetCursor(longValueCurPos, 1);
         break;
-      case 2:                                                          // выбор позиции настройки времени -минуты-дни -дни
+      case 2:                                                          // смена разряда настройки длины колеса
+        longValueCurPos = longValueCurPos == 3 ? 0 : longValueCurPos + 1;
+        lcdSetCursor(longValueCurPos, 1);
+        break;
+      case 3:                                                          // выбор позиции настройки времени -минуты-дни -дни
         timeModeSet = timeModeSet == 6 ? 2 : timeModeSet + 1;
         break;
-      case 3:                                                          // hard reset
+      case 4:                                                          // hard reset
+        timeModeSet = 2;
         lcdSetCursor(14, 1);
         lcd.print(F("W8"));
         resetAchievements();                                           // чистим достижения
@@ -126,11 +147,7 @@ void PressedLongTheFirstButton() {                                     // дли
 }
 
 void PressedTheSecondButton() {                                        // короткое нажатие кнопки 2
-  if (!isSettingsMenuActive) {                                         // смена экрана в зависимости от того в настрайках мы или нет
-    menuPosition == 4 ? menuPosition = 0  : menuPosition ++;
-  } else {
-    menuPosition == 3 ? menuPosition = 0  : menuPosition ++;
-  }
+  menuPosition == 4 ? menuPosition = 0  : menuPosition ++;
   redrawValues = true;
   redrawScreen = true;
 }
@@ -147,8 +164,8 @@ void PressedLongTheSecondButton() {                                     // до�
   } else {                                                              // если перешли в меню настроек
     detachInt();                                                        // вырубаем регистратор скорости
     isSettingsMenuActive = true;                                        // свпаем режим
+    time.blinktime(0);
     printCurrentScreenSettingsTittles();
     printCurrentScreenSettingsValues();
   }
 }
-

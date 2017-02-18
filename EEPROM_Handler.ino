@@ -3,9 +3,11 @@
   1  - totalDays
   3  - cycleLengthValueMM
   5  - MaxSpeed
-  9  - totalDistance
-  13 - totalDistanceMM
-  17 - totalTime
+  9  - Weight
+  11 - totalDistance
+  15 - totalDistanceMM
+  19 - totalTime
+  23 - Конец
 */
 
 void readDataFromEEPROM() {                                           // читаем данные из EEPROM
@@ -14,17 +16,18 @@ void readDataFromEEPROM() {                                           // чит�
   EEPROM.get(3, cycleLengthValueMM);
   cycleLengthValue = cycleLengthValueMM / 1000.0 * 3.6;
   EEPROM.get(5, maxSpeed);
-  EEPROM.get(9, totalDistance);
-  EEPROM.get(13, totalDistanceMM);
-  EEPROM.get(17, totalTime);
+  EEPROM.get(9, weight);
+  EEPROM.get(11, totalDistance);
+  EEPROM.get(15, totalDistanceMM);
+  EEPROM.get(19, totalTime);
 }
 
 void saveDataAtEEPROM() {                                             // сохранение данных в EEPROM
   writeDataToEEPROM(1, totalDays);
   writeDataToEEPROM(5, maxSpeed);
-  writeDataToEEPROM(9, totalDistance);
-  writeDataToEEPROM(13, totalDistanceMM);
-  writeDataToEEPROM(17, totalTime);
+  writeDataToEEPROM(11, totalDistance);
+  writeDataToEEPROM(15, totalDistanceMM);
+  writeDataToEEPROM(19, totalTime);
 }
 
 
@@ -34,6 +37,10 @@ void setCycleLenght(int num) {                                        // зап�
 
 void setBrightness(byte num) {                                        // записываем уровень яркости
   writeDataToEEPROM(0, num);
+}
+
+void setWeight(int num) {
+  writeDataToEEPROM(9, num);
 }
 
 void writeDataToEEPROM(int addr, int value) {                         // запись в EEPROM переменной типа int
@@ -56,5 +63,3 @@ void writeDataToEEPROM(int addr, float value) {                       // зап�
   if (tmp != value)
     EEPROM.put(addr, value);
 }
-
-

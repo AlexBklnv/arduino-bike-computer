@@ -35,7 +35,8 @@ void readDataFromRadio() {                                                // ч�
     radio.read(&msg, sizeof(msg));
     BPM = atoi(msg);
     attachInt();                                                          // данные приняты и можем возращать регистратор
+    dynHR += BPM;
+    countDynAvgHR++;
     redrawValues = true;
   }
 }
-

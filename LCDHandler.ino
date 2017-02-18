@@ -65,11 +65,19 @@ void lcdClear() {                                                    // чист
   lcd.clear();
 }
 
+void printWeight() {
+  clearValue(0, 1, 3);
+  if (weight < 100)
+    lcd.print(0);
+  else
+    lcd.print(weight);
+}
+
 void printCurrentScreenTittles() {                                   // вывод заголовков экранов
   lcdClear();
   lcdSetCursor(0, 0);
   if (menuPosition == 0) {                                           // экран текущей скорости, дистанции и времени пути.
-    printCurSpeedTittle();                                            
+    printCurSpeedTittle();
     lcdSetCursor(10, 0);
     lcdWrite(travelClockIndex);
     printCurDistanceTittle();
@@ -141,17 +149,24 @@ void printCurrentScreenSettingsTittles() {                           // выво
     lcd.print(F("Set brightness"));
     lcdSetCursor(3, 1);
     lcd.print(F("%"));
-  } else if (menuPosition == 1) {                                    // экран установки длины окружности колеса
+  } else if (menuPosition == 1) {                                    // экран настройки веса
+    lcd.print(F("Set weight "));
+    lcdWrite(weightIndex);
+    lcdSetCursor(5, 1);
+    lcd.print(F("mm."));
+    longValueCurPos = 0;
+    lcdSetCursor(longValueCurPos, 1);
+    lcd.blink();
+  } else if (menuPosition == 2) {                                    // экран установки длины окружности колеса
     lcd.print(F("Set cycle length"));
     lcdSetCursor(5, 1);
     lcd.print(F("mm."));
-    cycleLengthCurPos = 0;
-    lcdSetCursor(cycleLengthCurPos, 1);
-    lcd.blink();
-  } else if (menuPosition == 2) {                                    // экран настройки даты и времени
+    longValueCurPos = 0;
+    lcdSetCursor(longValueCurPos, 1);
+  } else if (menuPosition == 3) {                                    // экран настройки даты и времени
     lcd.noBlink();
     printDateTimeSettings();
-  } else if (menuPosition == 3) {                                    // экран сброса
+  } else if (menuPosition == 4) {                                    // экран сброса
     lcd.print(F("Reset your "));
     lcdWrite(achievementIndex);
     lcdSetCursor(0, 1);
@@ -172,11 +187,13 @@ void printCurrentScreenSettingsValues() {                            // выво
     clearValue(0, 1, 3);
     lcd.print((byte)round(brightness / 2.55));
   } else if (menuPosition == 1) {
+    clearValue(0, 1, 3);
+    printWeight();
+  } else if (menuPosition == 2) {
     lcdSetCursor(0, 1);
     lcd.print(cycleLengthValueMM);
-    lcdSetCursor(cycleLengthCurPos, 1);
-  } else if (menuPosition == 2) {
+    lcdSetCursor(longValueCurPos, 1);
+  } else if (menuPosition == 3) {
     printDateTimeSettings();
   }
 }
-
