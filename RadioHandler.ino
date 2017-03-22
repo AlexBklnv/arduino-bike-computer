@@ -32,7 +32,7 @@ void readDataFromRadio() {                                                // ч�
  if (radio.available()) {
     char msg[3];
     detachInt();                                                          // отключаем регистратор на короткое время для приема данных
-    radio.read(&msg, sizeof(msg));
+    radio.read(&msg, 3);
     BPM = atoi(msg);
     attachInt();                                                          // данные приняты и можем возращать регистратор
     dynHR += BPM;

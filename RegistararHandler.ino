@@ -43,14 +43,12 @@ void travelDynCharRegistrator() {                                         // р�
       totalDistanceMM += cycleLengthValueMM;                              // глобальный путь в мм для точности
       travelTime += timeInterval;                                         // текущее время пути
       totalTime += timeInterval;                                          // глобальное время пути
-
+      
       lastCycleTurnTime = millis();                                       // время последнего оборота колеса
       isMovement = true;
       redrawValues = true;                                                // разрешаем перерисовать значения
       saveSdData = true;
     }
-    Serial.print("out->");
-    Serial.println(travelDistance);
   }
   attachInt();                                                            // рарешаем прерывание.
 }

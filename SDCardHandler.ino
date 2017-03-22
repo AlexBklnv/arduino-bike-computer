@@ -36,7 +36,6 @@ void writeDynDataToSD() {                                                       
    else
     dynHR = (dynHR / countDynAvgHR);
   dynBurned = (unsigned long)((float)weight * 0.014 * ((float)0.12*dynHR - 7));
-  
   file.write(dynBurned);
   
   file.print(F("\" spd=\""));   file.write(dynSpeed / countDynAvgSpeed);

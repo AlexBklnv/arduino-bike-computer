@@ -93,10 +93,11 @@ unsigned long saveSdStopTmStmp = 0;
 
 
 void setup() {
+//  initStartEEPROM();
   // pinMode(4, OUTPUT);                                                // временная настройка пина на время тестов
   Serial.begin(115200);                                                 // настраиваем сериал
-  initLCD();                                                            // инициализируем основные настрйоки экрана
   readDataFromEEPROM();                                                 // инициализируем начальное значение переменных сохраннеых в EEPROM
+  initLCD();                                                            // инициализируем основные настрйоки экрана
   time.begin();                                                         // запуск работы с часами
   initButtons();                                                        // инициализируем обработчик кнопок
   initRadio();                                                          // инициализируем радио передатчик
@@ -187,12 +188,6 @@ void loop() {
       } else {
         redrawValues = false;                                           // иначе не требуется
       }
-    }
-    if (statusBLE > 0) {                                                // если активен блюпуп
-      if (statusBLE == 2)                                               // если режим передачи динамических данных
-        sendDynDataToDevice();                                          // шлем данные
-      if (millis() - requestResetTimeStamp > 20000)                     // интервал ожидания в 20 секунд
-        statusBLE = 0;                                                  // обнуляем статус
     }
     lifeCycleTime = millis();                                           // фиксируем время для следующего обновления экрана
   }

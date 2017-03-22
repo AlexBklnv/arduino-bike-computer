@@ -65,13 +65,6 @@ void lcdClear() {                                                    // чист
   lcd.clear();
 }
 
-void printWeight() {
-  clearValue(0, 1, 3);
-  if (weight < 100)
-    lcd.print(0);
-  else
-    lcd.print(weight);
-}
 
 void printCurrentScreenTittles() {                                   // вывод заголовков экранов
   lcdClear();
@@ -153,7 +146,7 @@ void printCurrentScreenSettingsTittles() {                           // выво
     lcd.print(F("Set weight "));
     lcdWrite(weightIndex);
     lcdSetCursor(5, 1);
-    lcd.print(F("mm."));
+    lcd.print(F("kg."));
     longValueCurPos = 0;
     lcdSetCursor(longValueCurPos, 1);
     lcd.blink();
@@ -188,7 +181,11 @@ void printCurrentScreenSettingsValues() {                            // выво
     lcd.print((byte)round(brightness / 2.55));
   } else if (menuPosition == 1) {
     clearValue(0, 1, 3);
-    printWeight();
+    if (weight < 100){
+      lcd.print(0);
+      lcd.print(weight);
+    } else
+      lcd.print(weight);
   } else if (menuPosition == 2) {
     lcdSetCursor(0, 1);
     lcd.print(cycleLengthValueMM);

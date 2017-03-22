@@ -30,6 +30,17 @@ void saveDataAtEEPROM() {                                             // сох�
   writeDataToEEPROM(19, totalTime);
 }
 
+void initStartEEPROM() {
+  writeDataToEEPROM(0, 127);
+  writeDataToEEPROM(1, 0);
+  writeDataToEEPROM(3, 2000);
+  writeDataToEEPROM(5, (float)0.0);
+  writeDataToEEPROM(9, 50);
+  writeDataToEEPROM(11, (unsigned long)0);
+  writeDataToEEPROM(15, (unsigned long)0);
+  writeDataToEEPROM(19, (unsigned long)0);
+}
+
 
 void setCycleLenght(int num) {                                        // записываем длину колеса
   writeDataToEEPROM(3, num);
