@@ -50,16 +50,18 @@ volatile float maxSpeed = 0.0;                                          // ма�
 
 // характеристики здоровья велосепидиста
 unsigned long curCal = 0;                                               // текущее количество сожженных ккал
-int BPM = 0;                                                            // текущее сердцебиение                                          
+int BPM = 0;                                                            // текущее сердцебиение
 int weight = 50;
 // характеристики текущего пути в интервале  1 минуты
 // требуемые для записи на SD карту
-/* E = 0.014*G*t*(0.12*f-7) 
- где  E – энергозатраты в килокалориях,
+/* E = 0.014*G*t*(0.12*f-7)
+  где  E – энергозатраты в килокалориях,
       G – масса тела в килограммах,
       t – время в минутах,
       f – число сердечных сокращений (ЧСС) в минуту.
- */
+*/
+unsigned long sendDynDataTimeStamp = 0;
+bool isSendDynData = false;
 unsigned long dynBurned = 0;                                                      // количество сожженых ккал
 unsigned long dynDist = 0;                                              // пройденная дистанция
 float dynSpeed = 0.0;                                                   // средняя скорость
@@ -87,13 +89,13 @@ bool isSettingsMenuActive = false;                                      // на�
 bool saveData = false;                                                  // требуется ли сохранить данные в EEPROM
 unsigned long saveStartTimeStamp = 0;                                   // начало периода отсчета сохранения данных в EEPROM
 unsigned long saveStopTimeStamp = 0;                                    // конец периода отсчета сохранения данных в EEPROM
-bool saveSdData = false; 
+bool saveSdData = false;
 unsigned long saveSdStarTmStmp = 0;
 unsigned long saveSdStopTmStmp = 0;
 
 
 void setup() {
-//  initStartEEPROM();
+  //  initStartEEPROM();
   // pinMode(4, OUTPUT);                                                // временная настройка пина на время тестов
   Serial.begin(115200);                                                 // настраиваем сериал
   readDataFromEEPROM();                                                 // инициализируем начальное значение переменных сохраннеых в EEPROM
@@ -107,11 +109,11 @@ void setup() {
 }
 
 void loop() {
-/* времененный генератор скорости
-  writeDynDataToSD();
-  digitalWrite(4, HIGH);
-  digitalWrite(4, LOW);
-  delay(100);*/
+  /* времененный генератор скорости
+    writeDynDataToSD();
+    digitalWrite(4, HIGH);
+    digitalWrite(4, LOW);
+    delay(100);*/
   buttonsHandler();                                                     // проверяем есть ли события на кнопке
   if (isMovement) {                                                     // если мы движемся
     writeDataToRadio(true);                                             // отправляем запрос пульсометру о начале считывания
@@ -140,12 +142,18 @@ void loop() {
       saveStartTimeStamp = millis();
     } else if (saveStopTimeStamp - saveStartTimeStamp >= 300000) {      // 5 минут
       saveDataAtEEPROM();                                               // сохраняем данные в постоянную память
-      saveStartTimeStamp = 0;                                            
+      saveStartTimeStamp = 0;
     }
     saveStopTimeStamp = millis();
     readDataFromRadio();                                                // читаем данные с пульсометра если они доступны
+    if (isSendDynData) {
+      if (sendDynDataTimeStamp - millis() >= 1000){
+        isSendDynData = false;
+        sendDynData();
+      }
+    }
   } else {
-    if (stopHandler) {                                                  // после остановки если нет движения 
+    if (stopHandler) {                                                  // после остановки если нет движения
       if (millis() - stopTime >= 900000) {                              // 15 минут
         saveDataAtEEPROM();                                             // сохраняем данные
         resetTravelChar();                                              // обнуляем динамические параметры второго типа
@@ -153,16 +161,16 @@ void loop() {
     }
   }
 
-  if (saveSdData){
-     if (saveSdStarTmStmp == 0) {  
+  if (saveSdData) {
+    if (saveSdStarTmStmp == 0) {
       saveSdStarTmStmp = millis();
-    } else if (saveSdStopTmStmp - saveSdStarTmStmp >= 60*1000) {      
-      if (initSDCard()){
-      writeDynDataToSD();
-      saveSdData = false;
-      saveSdStopTmStmp = 0;
-      saveSdStarTmStmp = 0;   
-      }                                         
+    } else if (saveSdStopTmStmp - saveSdStarTmStmp >= 60 * 1000) {
+      if (initSDCard()) {
+        writeDynDataToSD();
+        saveSdData = false;
+        saveSdStopTmStmp = 0;
+        saveSdStarTmStmp = 0;
+      }
     }
     saveSdStopTmStmp = millis();
   }
@@ -183,7 +191,7 @@ void loop() {
         printCurrentScreenSettingsValues();                             // обновляем значения
       }
       if ((menuPosition == 3 && isSettingsMenuActive)                   // если в меню настроек 2
-      ||(menuPosition == 1 && !isSettingsMenuActive) ) {                // или в меню отображения данных в меню с часами(для обновления часов)
+          || (menuPosition == 1 && !isSettingsMenuActive) ) {               // или в меню отображения данных в меню с часами(для обновления часов)
         redrawValues = true;                                            // требуется обновить экран по времени для мерцания значения часов
       } else {
         redrawValues = false;                                           // иначе не требуется

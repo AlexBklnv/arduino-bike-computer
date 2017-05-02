@@ -10,20 +10,31 @@ void serialEvent() {                                                            
           while (isFileAvailable())                                                       // отправляем файл как поток байтов
             Serial.print(fileRead());
           closeFile();
-          Serial.print(F("#!"));
+          sendStopField();
         } else if (msgDev[2] == 'D') {
-          Serial.print(F("s="));                                                                // текущая скорость
-          Serial.print(curSpeed);
-          Serial.print(F("h="));                                                                // хартрейт
-          Serial.print(BPM);
-          Serial.print(F("d="));                                                                // дистанция
-          Serial.print((unsigned long)(travelDistance / 1000));
-          Serial.print(F("c="));                                                                // ккал
-          Serial.print(curCal);
-          Serial.print(F("#!"));
-          Serial.flush();
+          isSendDynData = true;
+          sendDynDataTimeStamp = millis();
         }
       }
   }
 }
 
+void sendStopField(){
+  Serial.print(F("$"));  
+}
+
+void sendDynData() {
+  Serial.print(F("s="));                                                                // текущая скорость
+  Serial.print(curSpeed);
+  sendStopField();
+  Serial.print(F("h="));                                                                // хартрейт
+  Serial.print(BPM);
+  sendStopField();
+  Serial.print(F("d="));                                                                // дистанция
+  Serial.print((unsigned long)(travelDistance / 1000));
+  sendStopField();
+  Serial.print(F("c="));                                                                // кал
+  Serial.print(curCal);
+  sendStopField();
+  Serial.flush();
+}
