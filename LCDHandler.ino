@@ -183,11 +183,12 @@ void printCurrentScreenSettingsTittles() {                           // выво
     lcd.print(isMetric ? F(">KMH") : F("KMH"));
   } else if (menuPosition == 5) {                                    // заряды батарей
     isSendBatStatus = true;
-    writeDataToRadio();
-    waitBatStatusTimeStamp = millis();
     lcd.print("Sync battary");
     lcdSetCursor(0, 1);
     lcd.print("status");
+    pulseBat = 0;
+    writeDataToRadio();
+    waitBatStatusTimeStamp = millis();
     while ((millis() - waitBatStatusTimeStamp < 5000) || (pulseBat == 0)) {
       readDataFromRadio();
     }
@@ -196,6 +197,7 @@ void printCurrentScreenSettingsTittles() {                           // выво
     lcd.print(F("Bike bat "));
     lcd.print(round(0.09765625 * analogRead(PIN_BAT)));
     lcd.print(F("%"));
+    lcdSetCursor(0, 1);
     lcd.print(F("Pulse bat "));
     if (pulseBat == 0)
       lcd.print("unknow");

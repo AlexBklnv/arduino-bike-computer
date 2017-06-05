@@ -3,7 +3,7 @@ const uint64_t pipes[2] = { 0xABCDABCD71, 0x544d52687C};                  // а�
 void initRadio() {
   radio.begin();
   delay(2);
-  radio.setChannel(82);
+  radio.setChannel(65);
   radio.setDataRate(RF24_1MBPS);
   radio.setPALevel(RF24_PA_MIN);
   radio.setRetries(15, 15);                                               // (мс, попыток)
@@ -29,10 +29,6 @@ void writeDataToRadio() {                                   // отправля�
       msg[2] = '|';                                                         // #>| - останавливаем сканировение
     }
   }
-  sendMsg(msg);
-}
-
-void sendMsg(char msg[]) {
   radio.stopListening();
   radio.write(&msg, sizeof(msg));
   radio.startListening();
