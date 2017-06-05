@@ -1,6 +1,7 @@
 // пины кнопок
 #define BUTTON_1_PIN 5                                                // пин кнопки 1. // кнопка 1 действует только в меню настроек
 #define BUTTON_2_PIN 6                                                // пин кнопки 2
+#define TIME_LONG_PRESS 1100
 
 // анти дребезг контактов на кнопках
 Bounce debounceButton1 = Bounce();
@@ -23,20 +24,24 @@ void initButtons() {
 // распознователь коротких и длинных нажатий на кнопку
 void buttonsHandler() {
   if (debounceButton1.update())  {                                    // распознователь кнопки №1
-    if (debounceButton1.read() == 1) {
+    if (debounceButton1.read() == HIGH) {
       buttonPressTimeStamp =  millis();
     } else {
-      if (millis() - buttonPressTimeStamp >= 2000) {
+      if (isSleep)
+        toWakeUp();
+      if (millis() - buttonPressTimeStamp >= TIME_LONG_PRESS) {
         PressedLongTheFirstButton();
       } else {
         PressedTheFirstButton();
       }
     }
   } else if (debounceButton2.update())  {                             // распознователь кнопки №2
-    if (debounceButton2.read() == 1) {
+    if (debounceButton2.read() == HIGH) {
       buttonPressTimeStamp =  millis();
     } else {
-      if (millis() - buttonPressTimeStamp >= 2000) {
+      if (isSleep)
+        toWakeUp();
+      if (millis() - buttonPressTimeStamp >= TIME_LONG_PRESS) {
         PressedLongTheSecondButton();
       } else {
         PressedTheSecondButton();
@@ -56,40 +61,47 @@ void PressedTheFirstButton() {                                         // кор
         setBrightnessLCD();                                           // устанавливаем яркость экрана
         break;
       case 1:                                                         // меню настроек веса
-        for (byte i = 0; i < (2 - longValueCurPos); i++)              // в зависимости от разряда вычисляем множитель
+        for (byte i = 0; i < (2 - valueCurPos); i++)              // в зависимости от разряда вычисляем множитель
           tmpPoweredScope *= 10;
 
-        if (longValueCurPos == 0)                                     // поразрядно слева направо получаем цифру
-          digit = (byte)(cycleLengthValueMM / 100);
-        else if (longValueCurPos == 1)
-          digit = (byte)((cycleLengthValueMM % 100) / 10);
-        else if (longValueCurPos == 2)
-          digit = (byte)(cycleLengthValueMM % 10);
+        if (valueCurPos == 0)                                     // поразрядно слева направо получаем цифру
+          digit = (byte)(weight / 100);
+        else if (valueCurPos == 1)
+          digit = (byte)((weight % 100) / 10);
+        else if (valueCurPos == 2)
+          digit = (byte)(weight % 10);
 
-        if (longValueCurPos == 0) {
+        if (valueCurPos == 0) {
           weight = digit == 3 ? weight - 3 * tmpPoweredScope : weight + tmpPoweredScope;
-        } else if (longValueCurPos == 1)
-          weight = digit == 9 ? weight - 6 * tmpPoweredScope : weight + tmpPoweredScope;
-        else {
+          if (weight < 100)
+            if (weight < 30)
+              weight = weight + 30 - weight;
+        } else if (valueCurPos == 1) {
+          byte mult = 6;
+          if (weight >= 100)
+            mult = 9;
+          weight = digit == 9 ? weight - mult * tmpPoweredScope : weight + tmpPoweredScope;
+        } else {
           weight = digit == 9 ? weight - 9 * tmpPoweredScope : weight + tmpPoweredScope;
         }
+
         setWeight(weight);                                             // сохраняем значение веса
         break;
       case 2:                                                          // меню настроек длины колеса
-        for (byte i = 0; i < (3 - longValueCurPos); i++)               // в зависимости от разряда вычисляем множитель
+        for (byte i = 0; i < (3 - valueCurPos); i++)               // в зависимости от разряда вычисляем множитель
           tmpPoweredScope *= 10;
 
-        if (longValueCurPos == 0)                                      // поразрядно слева направо получаем цифру
+        if (valueCurPos == 0)                                      // поразрядно слева направо получаем цифру
           digit = (byte)(cycleLengthValueMM / 1000);
-        else if (longValueCurPos == 1)
+        else if (valueCurPos == 1)
           digit = (byte)((cycleLengthValueMM / 100) % 10);
-        else if (longValueCurPos == 2)
+        else if (valueCurPos == 2)
           digit = (byte)((cycleLengthValueMM % 100) / 10);
-        else if (longValueCurPos == 3)
+        else if (valueCurPos == 3)
           digit = (byte)(cycleLengthValueMM % 10);
 
-        if (longValueCurPos == 0)
-          cycleLengthValueMM = digit == 5 ? cycleLengthValueMM - 4 * tmpPoweredScope : cycleLengthValueMM + tmpPoweredScope;
+        if (valueCurPos == 0)
+          cycleLengthValueMM = digit == 3 ? cycleLengthValueMM - 2 * tmpPoweredScope : cycleLengthValueMM + tmpPoweredScope;
         else
           cycleLengthValueMM = digit == 9 ? cycleLengthValueMM - 9 * tmpPoweredScope : cycleLengthValueMM + tmpPoweredScope;
 
@@ -109,6 +121,10 @@ void PressedTheFirstButton() {                                         // кор
         else if (timeModeSet == 6)                                     // устанавливаем год
           time.settime(-1, -1, -1, -1, -1, (time.year == 99 ? 0 : time.year + 1), -1);
         break;
+      case 4:
+        isMetric = !isMetric;
+        redrawScreen = true;
+        break;
       default:
         break;
     }
@@ -120,17 +136,17 @@ void PressedLongTheFirstButton() {                                     // дли
   if (isSettingsMenuActive) {
     switch (menuPosition) {
       case 1:                                                          // смена разряда настройки веса
-        longValueCurPos = longValueCurPos ==  2 ? 0 : longValueCurPos + 1;
-        lcdSetCursor(longValueCurPos, 1);
+        valueCurPos = valueCurPos ==  2 ? 0 : valueCurPos + 1;
+        lcdSetCursor(valueCurPos, 1);
         break;
       case 2:                                                          // смена разряда настройки длины колеса
-        longValueCurPos = longValueCurPos == 3 ? 0 : longValueCurPos + 1;
-        lcdSetCursor(longValueCurPos, 1);
+        valueCurPos = valueCurPos == 3 ? 0 : valueCurPos + 1;
+        lcdSetCursor(valueCurPos, 1);
         break;
       case 3:                                                          // выбор позиции настройки времени -минуты-дни -дни
         timeModeSet = timeModeSet == 6 ? 2 : timeModeSet + 1;
         break;
-      case 4:                                                          // hard reset
+      case 6:                                                          // hard reset
         timeModeSet = 2;
         lcdSetCursor(14, 1);
         lcd.print(F("W8"));
@@ -147,7 +163,10 @@ void PressedLongTheFirstButton() {                                     // дли
 }
 
 void PressedTheSecondButton() {                                        // короткое нажатие кнопки 2
-  menuPosition == 4 ? menuPosition = 0  : menuPosition ++;
+  byte maxMenu = 4;
+  if (isSettingsMenuActive)
+    maxMenu = 6;
+  menuPosition == maxMenu ? menuPosition = 0  : menuPosition ++;
   redrawValues = true;
   redrawScreen = true;
 }
@@ -159,12 +178,12 @@ void PressedLongTheSecondButton() {                                     // до�
     attachInt();	                                                      // врубаем регистратор скорости
     isSettingsMenuActive = false;                                       // меняем режим меню
     lcd.noBlink();                                                      // если были в меню настроек длины колеса то вырубаем блинк
+    time.blinktime(0);
     printCurrentScreenTittles();
     printCurrnetScreenValues();
   } else {                                                              // если перешли в меню настроек
     detachInt();                                                        // вырубаем регистратор скорости
     isSettingsMenuActive = true;                                        // свпаем режим
-    time.blinktime(0);
     printCurrentScreenSettingsTittles();
     printCurrentScreenSettingsValues();
   }

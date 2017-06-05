@@ -1,10 +1,28 @@
 #define BRIGHTNESS_PIN 3                                             // пин регулировки яркости экрана = 3
+#define PIN_BAT A1
 
 void initLCD() {                                                     // инициализация экрана
   lcd.init();                                                        // инициализация дисплея
   setBrightnessLCD();                                                // установка яркости экрана
-  lcd.backlight();                                                   // Включаем подсветку дисплея
+  toWakeUp();                                                        // Включаем подсветку дисплея
   initCustomChar();                                                  // инициализация собственных символов
+}
+
+void toSleep() {
+  isSleep = true;
+  redrawScreen = false;
+  redrawValues = false;
+  lcdClear();
+  lcd.noDisplay();
+  lcd.noBacklight();
+}
+
+void toWakeUp() {
+  isSleep = false;
+  lcd.backlight();
+  lcd.display();
+  redrawScreen = true;
+  redrawValues = true;
 }
 
 void setBrightnessLCD() {                                            // установка яркости экрана
@@ -21,7 +39,7 @@ void clearValue(byte col, byte row, byte rowLength) {                // очис
 
 void printCurSpeed() {                                               // вывод значения текущей скорости
   clearValue(0, 0, 5);
-  lcd.print(curSpeed, 1);
+  lcd.print(isMetric ? curSpeed  : curSpeed * 0.62, 1);
 }
 
 void printTravelDistance() {                                         // вывод значения текущей дистанции пути
@@ -43,7 +61,7 @@ void printTime(unsigned long time) {                                 // выво
 
 void printCurSpeedTittle() {                                         // вывод заголовка скорости на экран
   lcdSetCursor(6, 0);                                                // позиция после значения километража пишем измерение
-  lcd.print(F("KMH"));
+  lcd.print(isMetric ? F("KMH") : F("MPH"));
 }
 
 void printCurDistanceTittle() {                                      // вывод заголовка текущей дистанции на экран
@@ -84,13 +102,13 @@ void printCurrentScreenTittles() {                                   // выво
     lcdSetCursor(11, 0);
     lcdWrite(heartIndex);
     lcdSetCursor(7, 1);
-    lcd.print(F("cal."));
+    lcd.print(F("kcal."));
   } else if (menuPosition == 3) {                                    // экран текущей скорости и максимальной скорости
     printCurSpeedTittle();
     lcdSetCursor(0, 1);
     lcd.print(F("Max V"));
     lcdSetCursor(11, 1);
-    lcd.print(F("KMH"));
+    lcd.print(isMetric ? F("KMH") : F("MPH"));
   } else if (menuPosition == 4) {                                    // экран глоабльной дистанции и времени пути
     lcd.print(F("TD="));
     lcdSetCursor(14, 0);
@@ -120,7 +138,7 @@ void printCurrnetScreenValues() {                                    // выво
   } else if (menuPosition == 3) {                                    // экран текущей скорости и максимальной скорости
     printCurSpeed();
     clearValue(6, 1, 5);
-    lcd.print(maxSpeed, 1);
+    lcd.print(isMetric ? maxSpeed : maxSpeed  * 0.62, 1);
   } else if (menuPosition == 4) {                                    // экран глоабльной дистанции и времени пути
     clearValue(3, 0, 6);
     lcd.print(totalDistance);
@@ -147,19 +165,45 @@ void printCurrentScreenSettingsTittles() {                           // выво
     lcdWrite(weightIndex);
     lcdSetCursor(5, 1);
     lcd.print(F("kg."));
-    longValueCurPos = 0;
-    lcdSetCursor(longValueCurPos, 1);
+    valueCurPos = 0;
+    lcdSetCursor(valueCurPos, 1);
     lcd.blink();
   } else if (menuPosition == 2) {                                    // экран установки длины окружности колеса
     lcd.print(F("Set cycle length"));
     lcdSetCursor(5, 1);
     lcd.print(F("mm."));
-    longValueCurPos = 0;
-    lcdSetCursor(longValueCurPos, 1);
+    valueCurPos = 0;
+    lcdSetCursor(valueCurPos, 1);
   } else if (menuPosition == 3) {                                    // экран настройки даты и времени
     lcd.noBlink();
     printDateTimeSettings();
-  } else if (menuPosition == 4) {                                    // экран сброса
+  } else if (menuPosition == 4) {                                    // километры/милли
+    lcd.print(isMetric ? F("MPH") : F(">MPH"));
+    lcdSetCursor(0, 1);
+    lcd.print(isMetric ? F(">KMH") : F("KMH"));
+  } else if (menuPosition == 5) {                                    // заряды батарей
+    isSendBatStatus = true;
+    writeDataToRadio();
+    waitBatStatusTimeStamp = millis();
+    lcd.print("Sync battary");
+    lcdSetCursor(0, 1);
+    lcd.print("status");
+    while ((millis() - waitBatStatusTimeStamp < 5000) || (pulseBat == 0)) {
+      readDataFromRadio();
+    }
+    lcdClear();
+    lcdSetCursor(0, 0);
+    lcd.print(F("Bike bat "));
+    lcd.print(round(0.09765625 * analogRead(PIN_BAT)));
+    lcd.print(F("%"));
+    lcd.print(F("Pulse bat "));
+    if (pulseBat == 0)
+      lcd.print("unknow");
+    else {
+      lcd.print(pulseBat);
+      lcd.print(F("%"));
+    }
+  } else if (menuPosition == 6) {                                    // экран сброса
     lcd.print(F("Reset your "));
     lcdWrite(achievementIndex);
     lcdSetCursor(0, 1);
@@ -180,16 +224,15 @@ void printCurrentScreenSettingsValues() {                            // выво
     clearValue(0, 1, 3);
     lcd.print((byte)round(brightness / 2.55));
   } else if (menuPosition == 1) {
-    clearValue(0, 1, 3);
-    if (weight < 100){
+    lcdSetCursor(0, 1);
+    if (weight < 100)
       lcd.print(0);
-      lcd.print(weight);
-    } else
-      lcd.print(weight);
+    lcd.print(weight);
+    lcdSetCursor(valueCurPos, 1);
   } else if (menuPosition == 2) {
     lcdSetCursor(0, 1);
     lcd.print(cycleLengthValueMM);
-    lcdSetCursor(longValueCurPos, 1);
+    lcdSetCursor(valueCurPos, 1);
   } else if (menuPosition == 3) {
     printDateTimeSettings();
   }

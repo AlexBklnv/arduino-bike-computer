@@ -2,7 +2,13 @@ SdFat SD;
 SdFile file;
 
 bool initSDCard() {                                                                        // инициализация карточки
-  return SD.begin();
+  if (!SD.begin()) {
+    lcd.clear();
+    lcd.print(F("SD FAILED!"));
+    delay(2000);
+    return false;
+  }
+  return true;
 }
 
 void eraseSD() {                                                                           // уничтожаем с ионной пушки файл лога
@@ -12,11 +18,11 @@ void eraseSD() {                                                                
 }
 
 void openFile(byte mode) {                                                                 // открываем файлик на запись
-  file.open("logfile.txt", mode);
+  file.open("log.txt", mode);
 }
 
 void openFile() {                                                                          // открываем файлик на чтение
-  file.open("logfile.txt");
+  file.open("log.txt");
 }
 
 void closeFile() {                                                                         // закрываем файлик
@@ -28,19 +34,20 @@ void writeDynDataToSD() {                                                       
   openFile(FILE_WRITE);
   file.print(F("<spec d=\""));  file.print(time.gettime("d:m:Y"));
   file.print(F("\" tc=\""));    file.print(time.gettime("H:i"));
-  file.print(F("\" dst=\""));   file.write((unsigned long)(dynDist / 1000));
-  file.print(F("\" brn=\""));   
+  file.print(F("\" dst=\""));   file.print((unsigned long)(dynDist / 1000));
+  file.print(F("\" brn=\""));
 
   if (countDynAvgHR < 30)
-    dynHR = 85;
-   else
+    dynHR = 120;
+  else
     dynHR = (dynHR / countDynAvgHR);
-  dynBurned = (unsigned long)((float)weight * 0.014 * ((float)0.12*dynHR - 7));
-  file.write(dynBurned);
-  
-  file.print(F("\" spd=\""));   file.write(dynSpeed / countDynAvgSpeed);
-  file.print(F("\" bpm=\""));   file.write(dynHR);
-  file.println(F("\"\">"));
+  dynBurned = (unsigned long)((float)weight * 0.014 * ((float)0.12 * dynHR - 7));
+  curCal = curCal + dynBurned;
+  file.print(dynBurned);
+
+  file.print(F("\" spd=\""));   file.print(dynSpeed / countDynAvgSpeed);
+  file.print(F("\" bpm=\""));   file.print(dynHR);
+  file.println(F("\"/>"));
   closeFile();
   resetDynCharSD();
   attachInt();

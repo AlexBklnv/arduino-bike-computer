@@ -3,7 +3,7 @@ const uint64_t pipes[2] = { 0xABCDABCD71, 0x544d52687C};                  // а�
 void initRadio() {
   radio.begin();
   delay(2);
-  radio.setChannel(85);
+  radio.setChannel(82);
   radio.setDataRate(RF24_1MBPS);
   radio.setPALevel(RF24_PA_MIN);
   radio.setRetries(15, 15);                                               // (мс, попыток)
@@ -12,31 +12,47 @@ void initRadio() {
   radio.startListening();
 }
 
-void writeDataToRadio(bool startScan) {                                   // отправляем запрос по радио пульсометру по шаблону 
+void writeDataToRadio() {                                   // отправляем запрос по радио пульсометру по шаблону
+  detachInt();
   char msg[3];
-  msg[0] = '#';                                                           
-  if (startScan) {
-    msg[1] = '<';
-    msg[2] = '<';                                                         // #<< - начинаем сканировение
+  msg[0] = '#';
+  if (isSendBatStatus) {
+    msg[1] = 'B';
+    msg[2] = 'S';
+    isSendBatStatus = false;
   } else {
-    msg[1] = '>';
-    msg[2] = '|';                                                         // #>| - останавливаем сканировение
+    if (startScan) {
+      msg[1] = '<';
+      msg[2] = '<';                                                         // #<< - начинаем сканировение
+    } else {
+      msg[1] = '>';
+      msg[2] = '|';                                                         // #>| - останавливаем сканировение
+    }
   }
+  sendMsg(msg);
+}
 
+void sendMsg(char msg[]) {
   radio.stopListening();
   radio.write(&msg, sizeof(msg));
   radio.startListening();
+  attachInt();
 }
 
 void readDataFromRadio() {                                                // читаем данные по сердцебиению
- if (radio.available()) {
-    char msg[3];
-    detachInt();                                                          // отключаем регистратор на короткое время для приема данных
+  detachInt();
+  if (radio.available()) {
+    char msg[3];                                                          // отключаем регистратор на короткое время для приема данных
     radio.read(&msg, 3);
-    BPM = atoi(msg);
-    attachInt();                                                          // данные приняты и можем возращать регистратор
-    dynHR += BPM;
-    countDynAvgHR++;
-    redrawValues = true;
+    if (startScan) {
+      BPM = atoi(msg);
+      dynHR += BPM;
+      countDynAvgHR++;
+      redrawValues = true;
+    } else {
+      pulseBat = atoi(msg);
+      redrawValues = true;
+    }
   }
+  attachInt();                                                          // данные приняты и можем возращать регистратор
 }
