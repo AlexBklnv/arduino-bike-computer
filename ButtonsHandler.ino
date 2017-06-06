@@ -28,7 +28,7 @@ void buttonsHandler() {
       buttonPressTimeStamp =  millis();
     } else {
       if (isSleep)
-        toWakeUp();
+        isDoWakeUp = true;
       if (millis() - buttonPressTimeStamp >= TIME_LONG_PRESS) {
         PressedLongTheFirstButton();
       } else {
@@ -40,7 +40,7 @@ void buttonsHandler() {
       buttonPressTimeStamp =  millis();
     } else {
       if (isSleep)
-        toWakeUp();
+        isDoWakeUp = true;
       if (millis() - buttonPressTimeStamp >= TIME_LONG_PRESS) {
         PressedLongTheSecondButton();
       } else {

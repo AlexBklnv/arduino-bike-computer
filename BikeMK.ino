@@ -16,6 +16,7 @@ RF24 radio(CE_PIN, CSN_PIN);
 iarduino_RTC time(RTC_DS3231);                                          // инициализация работы со временем
 bool isSendBatStatus = false;
 bool startScan = false;
+volatile bool isDoWakeUp = false;
 unsigned long waitBatStatusTimeStamp = 0;
 int pulseBat = 0;
 
@@ -24,7 +25,7 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);                                     // ус�
 byte brightness = 127;                                                  // яркость экрана
 bool redrawScreen = true;                                               // требуется ли обновить экран заголовков
 volatile bool redrawValues = true;                                      // требуется ли обновить экран значений
-bool isSleep = false;
+volatile bool isSleep = false;
 // bluetooth
 /*--statusBLE
   0 - ожидаем запроса подключения
@@ -204,5 +205,8 @@ void loop() {
       }
       lifeCycleTime = millis();                                           // фиксируем время для следующего обновления экрана
     }
+  } else if (isDoWakeUp) {
+    toWakeUp();
+    isDoWakeUp = false;
   }
 }

@@ -37,10 +37,10 @@ void writeDynDataToSD() {                                                       
   file.print(F("\" dst=\""));   file.print((unsigned long)(dynDist / 1000));
   file.print(F("\" brn=\""));
 
-  if (countDynAvgHR < 30)
+  if (countDynAvgHR < 20)
     dynHR = 120;
   else
-    dynHR = (dynHR / countDynAvgHR);
+    dynHR = countDynAvgHR == 0 ? 0 :(dynHR / countDynAvgHR);
   dynBurned = (unsigned long)((float)weight * 0.014 * ((float)0.12 * dynHR - 7));
   curCal = curCal + dynBurned;
   file.print(dynBurned);
