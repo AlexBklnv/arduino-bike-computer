@@ -35,10 +35,10 @@ void writeDataToRadio() {                                   // отправля�
   attachInt();
 }
 
-void readDataFromRadio() {                                                // читаем данные по сердцебиению
+void readDataFromRadio() {
   detachInt();
   if (radio.available()) {
-    char msg[3];                                                          // отключаем регистратор на короткое время для приема данных
+    char msg[3];
     radio.read(&msg, 3);
     if (startScan) {
       BPM = atoi(msg);
@@ -50,5 +50,5 @@ void readDataFromRadio() {                                                // ч�
       redrawValues = true;
     }
   }
-  attachInt();                                                          // данные приняты и можем возращать регистратор
+  attachInt();
 }
